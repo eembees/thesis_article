@@ -1,0 +1,43 @@
+%\usepackage{arxiv}
+%\usepackage[utf8]{inputenc} % allow utf-8 input
+%\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+%\usepackage{hyperref}       % hyperlinks
+%\usepackage{url}            % simple URL typesetting
+%\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+%\usepackage{microtype}      % microtypography
+%\usepackage{graphicx}
+%\usepackage[square, sort, numbers]{natbib}
+%\usepackage{doi}
+% \usepackage{subfig}
+% \usepackage{cleveref}
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{amsmath}
+\usepackage{multicol}
+\usepackage{subcaption}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.9}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit}
+\tikzset{>=latex}
+\usepackage{ifthen}
+\usepackage{intcalc}
+%\graphicspath{{./gfx/}}
+\usepackage{fontspec}
+
+% \usepgfplotslibrary{external}
+% \tikzexternalize
+
+\setmainfont[UprightFont={* Light},
+    BoldFont={*  Medium},
+    ItalicFont={* Light Italic},
+    BoldItalicFont={* Medium Italic},
+]{Noto Serif}
+
+
+\makeatletter
+\long\def\ifnodedefined#1#2#3{%
+    \@ifundefined{pgf@sh@ns@#1}{#3}{#2}%
+}
+\makeatother

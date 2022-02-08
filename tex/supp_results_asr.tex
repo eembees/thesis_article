@@ -1,0 +1,25 @@
+\section{Results of WaveNet+LSTM Models for Automatic Speech Recognition on TIMIT}\label{appx:wavenet-asr-timit}
+
+\Cref{tab:wavenet_asr_timit} shows results from running similar ASR experiments as in \cref{ssec:results-asr} on the TIMIT dataset. 
+Similarly to the results in \cref{tab:wavenet_asr_libri}, we see that intermediate outputs of the WaveNet give the largest improvement.
+This supports the case that WaveNet captures semantically relevant information in its intermediate layers. 
+
+
+\begin{table}[hb]
+    % TODO: move this to appendix
+    \centering
+    \vspace{12pt}
+    % \begin{subtable}{\linewidth}
+    \begin{tabular}{c||c|c}
+        Model & CTC Loss & CER \\
+        \hline
+        LSTM & 141.9 & 0.575\\ % https://wandb.ai/vseq/wavenet_asr/runs/13gncef3
+        LSTM+WaveNet-10 & 144.1 & 0.561 \\ % https://wandb.ai/vseq/wavenet_asr/runs/tlqwrh5u
+        LSTM+WaveNet-20 & \textbf{134.3} & \textbf{0.520} \\ % https://wandb.ai/vseq/wavenet_asr/runs/vgdrkjbi
+        LSTM+WaveNet-30 & 141.8 & 0.616 \\ % https://wandb.ai/vseq/wavenet_asr/runs/bpnnvrk7
+        LSTM+WaveNet-40 & 142.5 & 0.573 \\ % https://wandb.ai/vseq/wavenet_asr/runs/upem7wip
+    \end{tabular}
+    
+    \caption{Comparisons of ASR models with and without pretrained WaveNet transformations on the input signal. CTC Loss and CER are reported on the TIMIT test set.}
+    \label{tab:wavenet_asr_timit}
+\end{table}%

@@ -1,0 +1,74 @@
+\begin{tikzpicture}
+\node[circle,draw,fill=blue!50,minimum height=5mm,] (Input-15) at (15,0) {};
+\node[circle,draw,fill=gray!30,minimum height=5mm] (Hidden1-15) at (15,2) {};
+\node[circle,draw,fill=gray!30,minimum height=5mm] (Hidden2-15) at (15,4) {};
+\node[circle,draw,fill=gray!30,minimum height=5mm] (Hidden3-15) at (15,6) {};
+\node[circle,draw,fill=yellow!50,minimum height=5mm] (Output-15) at (15,8) {};
+
+\node[right=of Input-15, align=left] {
+\textbf{Input}
+};
+\node[right=of Hidden1-15, align=left] {
+\textbf{Hidden1}\\
+Dilation = 1
+};
+\node[right=of Hidden2-15, align=left] {
+\textbf{Hidden2}\\
+Dilation = 2
+};
+\node[right=of Hidden3-15, align=left] {
+\textbf{Hidden3}\\
+Dilation = 4
+};
+\node[right=of Output-15, align=left] {
+\textbf{Output}\\
+Dilation = 8
+};
+
+
+\draw[->, line width=1.5] (15,0.3) -- (15, 1.7);
+\draw[->, line width=1.5] (15,2.3) -- (15, 3.7);
+\draw[->, line width=1.5] (15,4.3) -- (15, 5.7);
+\draw[->, line width=1.5] (15,6.3) -- (15, 7.7);
+
+
+\foreach \x in {0, 1, ..., 14}{
+	\ifthenelse{\intcalcMod{\x}{2}=0}{
+		\draw[->, line width=1.5] (\x+0.15,0.3) -- (\x+0.85, 1.7);
+	}{
+		\draw[->, line width=1.5] (\x,0.3) -- (\x, 1.7);
+	}
+	\ifthenelse{\intcalcMod{\x}{4}=1}{
+		\draw[->, line width=1.5] (\x+0.3,2.3) -- (\x+1.7, 3.7);
+	}{}
+	\ifthenelse{\intcalcMod{\x}{4}=3}{
+		\draw[->, line width=1.5] (\x,2.3) -- (\x, 3.7);
+	}{}
+	\ifthenelse{\intcalcMod{\x}{8}=3}{
+		\draw[->, line width=1.5] (\x+0.3,4.3) -- (\x+3.7, 5.7);
+	}{}
+	\ifthenelse{\intcalcMod{\x}{8}=7}{
+		\draw[->, line width=1.5] (\x,4.3) -- (\x, 5.7);
+	}{}
+	\ifthenelse{\intcalcMod{\x}{16}=7}{
+		\draw[->, line width=1.5] (\x+0.3,6.3) -- (\x+7.7, 7.7);
+	}{}
+	\ifthenelse{\intcalcMod{\x}{16}=15}{
+		\draw[->, line width=1.5] (\x,6.3) -- (\x, 7.7);
+	}{}
+}
+
+\foreach \x in {0, 1, ..., 14}{
+	\draw[fill=blue!50] (\x,0) circle [radius=0.25];
+	\draw[fill=gray!30] (\x, 2) circle [radius=0.25];
+	\draw[fill=gray!30] (\x, 4) circle [radius=0.25];
+	\draw[fill=gray!30] (\x, 6) circle [radius=0.25];
+	\draw[fill=yellow!30] (\x, 8) circle [radius=0.25];
+}
+
+
+% caption on the right
+% \node[right=of Input-15] {Hello};
+
+
+\end{tikzpicture}%

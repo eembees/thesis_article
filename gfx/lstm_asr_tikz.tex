@@ -1,0 +1,78 @@
+\begin{tikzpicture}
+    % Input
+    \foreach \x in {0, 1, ..., 15}{
+            \node[circle,draw,fill=blue!50,minimum height=5mm] (Input-\x) at (\x,0) {};
+        }
+
+    %% Convolutional Layer
+
+    \node[rectangle, draw, rounded corners, above=of Input-15] (Conv-15)  {Conv1D};
+    \node[rectangle, draw, rounded corners, above=of Input-11] (Conv-11)  {Conv1D};
+    \node[rectangle, draw, rounded corners, above=of Input-7] (Conv-7)  {Conv1D};
+    \node[rectangle, draw, rounded corners, above=of Input-3] (Conv-3)  {Conv1D};
+
+    \foreach \x in {0, 1, ..., 15}{
+            \ifthenelse{
+                \intcalcMax{\x}{3}=3
+            }{
+                \draw[->, line width=1.5] (Input-\x) -- (Conv-3);
+            }{
+                \ifthenelse{
+                    \intcalcMax{\x}{7}=7
+                }{
+                    \draw[->, line width=1.5] (Input-\x) -- (Conv-7);
+                }{
+                    \ifthenelse{
+                        \intcalcMax{\x}{11}=11
+                    }{
+                        \draw[->, line width=1.5] (Input-\x) -- (Conv-11);
+                    }{
+
+                        \draw[->, line width=1.5] (Input-\x) -- (Conv-15);
+                    }
+                }
+            }
+        }
+
+    \foreach \i in {3,7,11,15}{
+            \node[rectangle, draw, above=of Conv-\i, minimum height=1cm, minimum width=1cm] (LSTM-\i) {LSTM};
+            \node[circle, minimum size = 10mm, draw, fill=gray!30, above=of LSTM-\i] (X-hat-\i) {$\hat{x}$};
+            \draw[->, line width=1.5] (Conv-\i) -- (LSTM-\i);
+            \draw[->, line width=1.5] (LSTM-\i) -- (X-hat-\i);
+            \ifthenelse{\i=3}{!}{
+                \draw[->] (LSTM-\intcalcSub{\i}{4}) -- (LSTM-\i) node[midway, above] {$h_t$};
+            }
+        }
+
+    \node[above=of X-hat-3] (Text-3) {R};
+    \node[above=of X-hat-7] (Text-7) {A};
+    \node[above=of X-hat-11] (Text-11) {I};
+    \node[above=of X-hat-15] (Text-15) {N};
+
+    \draw[->] (X-hat-3) -- (Text-3) {};
+    \draw[->] (X-hat-7) -- (Text-7) {};
+    \draw[->] (X-hat-11) -- (Text-11) {};
+    \draw[->] (X-hat-15) -- (Text-15) {};
+
+    % Text and notes
+    \node[right=of Input-15, align=left] {
+        \textbf{Input}
+    };
+
+    \node[right=of Conv-15, align=left] {
+        \textbf{Convolutional}\\\textbf{Downsampler}
+    };
+
+    \node[right=of LSTM-15, align=left] {
+        \textbf{LSTM}\\\textbf{ASR Model}
+    };
+
+    \node[right=of X-hat-15, align=left] {
+        \textbf{Softmax Output}
+    };
+
+    \node[right=of Text-15, align=left] {
+        \textbf{Decoded Output}
+    };
+
+\end{tikzpicture}

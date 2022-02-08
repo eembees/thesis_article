@@ -1,0 +1,85 @@
+
+\section{Model}
+\subsection{WaveNet}
+WaveNets are fully convolutional and autoregressive models for next-step prediction, reporting state-of-the-art performance for speech and music \cite{oord_wavenet_2016}.
+WaveNets maximize the following likelihood:
+\[
+p(\mathbf{x}) = p(x_t|x_{t-r}, ... , x_{t-1})
+\]
+where $r$ is the receptive field size of the network. 
+
+% TODO: consider removing below or moving to intro?
+WaveNets use dilated causal convolutions with the last input timestep masked to enforce next-step prediction \cite{dutilleux_implementation_1990}.
+This forces the network to only access the information from previous timesteps \cite{oord_wavenet_2016}.
+WaveNets stack dilated convolution layers with exponentially increasing dilation factors to ensure that the network sees every timestep once.
+This results in receptive fields that grow exponentially with the number of layers \cite{yu_multi-scale_2016}.
+
+
+
+\subsubsection{Receptive field size and stacking}
+The original WaveNet paper uses stacks of 10 dilated convolutions, each with a receptive field of 1024, and compares one stack to a more efficient version of a 1x1024 convolution. 
+The original WaveNet configuration, 5 stacks of 10 layers, has a receptive field of 5117 samples, which on 16 kHz audio translates to about 300 ms  
+ \cite{oord_pixel_2016, oord_wavenet_2016}.
+
+According to WaveNet's authors, the receptive field's size allows the model to learn lower-level half-syllabic sounds. 
+Still, it stops short of producing complete word-like audio without explicitly conditioning the network on another sequential representation such as text \cite{oord_wavenet_2016}.
+This comes as no surprise, as the receptive field roughly matches the size of the duration of a phoneme.
+\footnote{
+For an overview of phoneme lengths in the TIMIT dataset, see \cref{appx:timit-phoneme-duration}. }
+By using the transformation described in \cref{data:eq-transform}, we increase the receptive field of the WaveNet by a factor $S$ while keeping the number of parameters in the model constant. 
+% TODO: parameters not actually constant, will add 2*S*C with C=residual_channels , but 
+
+% A similar problem is explored by the authors of the VRNN and the SRNN, in which the model is constructed to reproduce sequences of 200-dimensional frames of raw audio waveforms in place of single-frame audio \cite{chung_recurrent_2016, fraccaro_sequential_2016}. 
+% While VRNN and SRNN perform on-step prediction, on-step latent variable models have been accused of allowing data leakage through the latent variable, by optimizing an output distribution $p_\theta(x_t | \mathbf{x}) \approx \Pi_{i=1}^L p_\theta (x_{t,i}|\mathbf{z}_{\leq t} , \mathbf{x}_{<t})$, where the learnt posterior $q(z_t|x_t)$ allows for conditioning on $x_t$. \cite{dai_re-examination_2019}
+
+
+\subsubsection{Output distributions in the WaveNet}
+In the original WaveNet paper, the authors use a 256-dimensional categorical output distribution, reasoning that they provide greater flexibility than mixture of conditional Gaussian scale mixtures (MCGSM) distributions in modeling distributions with arbitrary shapes, including multi-modal distributions
+\cite{oord_pixel_2016,oord_wavenet_2016}.
+Our initial experiments showed that categorical distributions collapse to predict silence (i.e., the global mode) when predicting stacks of multiple timesteps. 
+Instead, we use the discretized mixture of logistics (DMoL) which is widespread within image modeling and was recently used to model raw audio waveforms \cite{salimans_pixelcnn_2017, oord_parallel_2017}.
+The DMoL has a series of advantages over a simple categorical distribution. 
+First, the continuous mixture model over the output space enforces an ordinality over the observed space, where numerically close values are probabilistically close as well.
+This allows the model to express uncertainty about the value of $x_t$.
+Second, as a mixture model, the DMoL natively models a multi-modal distributions, which aligns well with the distribution of $\mu$-law encoded audio values seen in \cref{fig:mu-law-enc}. 
+Empirically, we find that conditional output distributions of a trained WaveNet are often multimodal (see \cref{appx:wavenet-output-distribution}).
+Finally, the DMoL is parametrized by an underlying continuous distribution over the possible values of $x_t$ and requires fewer parameters than a categorical distribution over the same space.
+
+
+
+% We attribute this to the added internal ordinality of the output distribution and find that using a discretized mixture of logistics as output distribution gives better audio reconstructions.
+
+
+\subsection{Enabling larger architectures}
+We used PyTorch's automatic mixed-precision training to test and develop large WaveNet architectures on single GPUs. 
+This allows for larger models to be trained while reducing memory consumption \cite{micikevicius_mixed_2018}.
+
+
+\subsubsection{Implementing Residual and Skip connections in the WaveNet Residual Stacks}
+The residual block of the WaveNet includes a residual and skip output in a forward pass. 
+One option is to feed a copy of the residual output to the skip connection. 
+The other option is to double the size of the residual convolution layer and split the output in two. 
+The difference between these is shown in \cref{appx:residual-stack}. 
+We relied on the latter option for our implementation, as the split distinguishes information that's important for the final output layer from information that needs more processing. 
+This is also the approach used by the original WaveNet and PixelCNN papers \cite{salimans_pixelcnn_2017, oord_wavenet_2016}. 
+The drawback of this approach is that each convolution layer's number of weights and operations doubles.
+This, in turn, limits the size of the models we can train. 
+
+\subsection{Likelihood by Bits Per Dimension metric}
+We use bits per dimension (BPD) to compare different configurations for WaveNets, denoted as
+\begin{equation}
+    b(\mathbf{x}) = - \frac{\log_2 p_\theta(\mathbf{x}) }{D}
+    \label{eq:bpd}
+\end{equation}
+where $D$ is the dimensionality of $\mathbf{x}$ and $\log_2 p_\theta(\mathbf{x})$ is the log-likelihood of the data $\mathbf{x}$. \cite{papamakarios_masked_2018} 
+Typically, $D$ represents the sequence length of the input $\mathbf{x}$. 
+We calculate $D$ based on the absolute sequence length, $N$, i.e., scaling D by the stacking factor $S$.
+\begin{equation*}
+D*S = \{\begin{array}{cc}
+    N,   & N \mod S = 0 \\
+    N+S, & N \mod S > 0
+\end{array}
+\end{equation*}
+Since $S << N$, we deem difference to be negligible in estimating comparable likelihood metrics. 
+The use of the BPD metric allows us to easily compare models with different stacking configurations (lower is better). 
+

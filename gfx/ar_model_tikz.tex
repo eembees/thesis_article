@@ -1,0 +1,61 @@
+\begin{tikzpicture}
+    % Input nodes
+    \node[circle, 
+    minimum size = 10mm,
+    draw,
+    % fill=orange!30
+    ] (Input-0) at (0,0) {$x_{t}$};
+    
+    \foreach \i in {1,2,3}
+    {
+        \node[circle, 
+            minimum size = 10mm,
+            draw,
+            % fill=orange!30,
+            ] (Input-\i) at (-1.25*\i,0) {$x_{t-\i}$};
+    }
+    
+    % Network
+    \node[rectangle, draw, above=of Input-1, minimum height=1cm, minimum width=1cm] (AR-Model) {AR model};
+    
+    % dots node
+    \node[circle, 
+        minimum size = 10mm,
+        % draw,
+        % fill=orange!30,
+        ] (Input-dots) at (-4.87,0) {$\dots$};
+    % R node at pos 5 
+    \node[circle, 
+            minimum size = 10mm,
+            draw,
+            % fill=orange!30,
+            ] (Input-R) at (-6,0) {$x_{t-R}$};
+            
+    \node[circle, 
+        minimum size = 10mm,
+        % draw,
+        % fill=orange!30,
+        ] (Input-R-1) at (-7,0) {\dots};
+    
+    % \draw[->] (Input-R.north) -- (AR-Model.south);
+    
+    % Arrows
+    \foreach \i in {1,2,3,R}
+    {
+        \draw[->] (Input-\i.north) -- (AR-Model.south);
+    }
+
+    % Output
+    \node[circle,
+     minimum size = 10mm,
+    fill=gray!30,
+    draw,
+    above=of AR-Model
+    ] (Output-0) {$\hat{x}_{t}$};
+
+    \draw[->] (AR-Model.north) -- (Output-0.south);
+
+    % Arrow from Hat to next 
+    \draw[->, dashed] (Output-0.east) edge[bend left=30] node[midway, right] {$\mathcal{L}_{t}$} (Input-0.north) ;
+
+\end{tikzpicture}%

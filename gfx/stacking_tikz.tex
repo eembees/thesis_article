@@ -1,0 +1,44 @@
+\begin{tikzpicture}
+    \foreach \x in {16, 12, 8, 4} {
+            \node[circle, draw, fill=black!20, minimum height=10mm,] (Stack-\intcalcDiv{\x}{4}-0) at (\x, 2.4) {};
+
+            \node[circle, draw, fill=black!20, minimum height=10mm,] (Stack-\intcalcDiv{\x}{4}-1) at (\x, 2.6) {};
+
+            \node[circle, draw, fill=black!20, minimum height=10mm,] (Stack-\intcalcDiv{\x}{4}-2) at (\x, 2.8) {};
+
+            \node[circle, draw, fill=black!20, minimum height=10mm,] (Stack-\intcalcDiv{\x}{4}) at (\x, 3) {$x^*_{\intcalcDiv{\x}{4}}$};
+        }
+
+
+    \foreach \x in {16, 15, ..., 1}{
+            \node[circle,draw,fill=white!50, minimum height=10mm,] (Input-\x) at (\x,0) {$x_{\x}$};
+        }
+
+    \draw[->, line width=1.5] (Input-1) -- (Stack-1-0);
+    \draw[->, line width=1.5] (Input-2) -- (Stack-1-0);
+    \draw[->, line width=1.5] (Input-3) -- (Stack-1-0);
+    \draw[->, line width=1.5] (Input-4) -- (Stack-1-0);
+
+    \draw[->, line width=1.5] (Input-5) -- (Stack-2-0);
+    \draw[->, line width=1.5] (Input-6) -- (Stack-2-0);
+    \draw[->, line width=1.5] (Input-7) -- (Stack-2-0);
+    \draw[->, line width=1.5] (Input-8) -- (Stack-2-0);
+
+    \draw[->, line width=1.5] (Input-9) -- (Stack-3-0);
+    \draw[->, line width=1.5] (Input-10) -- (Stack-3-0);
+    \draw[->, line width=1.5] (Input-11) -- (Stack-3-0);
+    \draw[->, line width=1.5] (Input-12) -- (Stack-3-0);
+
+    \draw[->, line width=1.5] (Input-13) -- (Stack-4-0);
+    \draw[->, line width=1.5] (Input-14) -- (Stack-4-0);
+    \draw[->, line width=1.5] (Input-15) -- (Stack-4-0);
+    \draw[->, line width=1.5] (Input-16) -- (Stack-4-0);
+
+    % \node[right=of Input-15, align=right] {
+    % \textbf{Original Input}
+    % };
+    % \node[right=of Stack-4, align=right] {
+    % \textbf{Stacked Input}
+    % };
+
+\end{tikzpicture}%

@@ -1,0 +1,15 @@
+\section{WaveNet's Residual block}\label{appx:residual-stack}
+When implementing the Residual Block (see \cref{fig:wavenet-res-block}) in WaveNet, we double the size of the residual convolution layer relative to the input and split the output in two.
+This corresponds to implementing the "Split" mode of the residual block.
+The alternative, to keep the output the same size as the input, correspond to implementing the residual block in "Copy" mode, as the output from the 1x1 convolution is copied and fed to both the next residual block as well as the skip connection. 
+
+
+\begin{figure}
+    \centering
+    \input{gfx/wavenet_residual_block_tikz}
+    \caption{
+    Overview of WaveNet's residual block. 
+    The "Split/Copy" operation, representing the two configurations of the residual block is highlighted.
+    }
+    \label{fig:wavenet-res-block}
+\end{figure}

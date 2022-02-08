@@ -1,0 +1,321 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  ignorenonframetext,
+]{beamer}
+\usepackage{pgfpages}
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{caption label separator}{: }
+\setbeamercolor{caption name}{fg=normal text.fg}
+\beamertemplatenavigationsymbolsempty
+% Prevent slide breaks in the middle of a paragraph
+\widowpenalties 1 10000
+\raggedbottom
+\setbeamertemplate{part page}{
+  \centering
+  \begin{beamercolorbox}[sep=16pt,center]{part title}
+    \usebeamerfont{part title}\insertpart\par
+  \end{beamercolorbox}
+}
+\setbeamertemplate{section page}{
+  \centering
+  \begin{beamercolorbox}[sep=12pt,center]{part title}
+    \usebeamerfont{section title}\insertsection\par
+  \end{beamercolorbox}
+}
+\setbeamertemplate{subsection page}{
+  \centering
+  \begin{beamercolorbox}[sep=8pt,center]{part title}
+    \usebeamerfont{subsection title}\insertsubsection\par
+  \end{beamercolorbox}
+}
+\AtBeginPart{
+  \frame{\partpage}
+}
+\AtBeginSection{
+  \ifbibliography
+  \else
+    \frame{\sectionpage}
+  \fi
+}
+\AtBeginSubsection{
+  \frame{\subsectionpage}
+}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usetheme[]{Metropolis}
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Generative Modelling of Sequential Data},
+  pdfauthor={Magnus Sletfjerding},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\newif\ifbibliography
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{Generative Modelling of Sequential Data}
+\subtitle{M.Sc. thesis in collaboration with Corti ApS}
+\author{Magnus Sletfjerding}
+\date{February 9th, 2022}
+
+\begin{document}
+\frame{\titlepage}
+
+\begin{frame}{Contents}
+\protect\hypertarget{contents}{}
+\tableofcontents
+\end{frame}
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+\begin{frame}{Why is it interesting to study hierarchies of information
+in time series?}
+\protect\hypertarget{why-is-it-interesting-to-study-hierarchies-of-information-in-time-series}{}
+\begin{itemize}
+\item
+  Most data we work with has some hierarchical structure
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Text
+  \item
+    Video
+  \item
+  \end{itemize}
+\item
+  Human brains process hierarchies of information natively
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Human-like AI requires hierarchical processing
+  \end{itemize}
+\item
+  All real-world data has a time dimension.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Sequence modeling}
+\protect\hypertarget{sequence-modeling}{}
+Sequence modeling optimize the model's likelihood \(p(\cdot)\) over the
+data \(\mathbf{x}\), by conditioning the probability of \(x_t\) on
+previous timesteps: \[
+p(\mathbf{x}) = \prod^N_{t=1}  p(x_t | x_{<t}) , \hspace{1cm}  \mathbf{x}\in \mathbb{R}^N
+\]
+\end{frame}
+
+\begin{frame}{Recurrent vs.~Convolutional Autoregressive models}
+\protect\hypertarget{recurrent-vs.-convolutional-autoregressive-models}{}
+\begin{figure}[t]  
+\centering 
+  \begin{subfigure}[b]{0.45\linewidth}
+  \resizebox{\columnwidth}{!}
+    {
+    \input{gfx/rnn_model_tikz}%
+    }
+  %\caption{Recurrent Architecture. %The recurrent unit can be either a Recurrent Neural Network, a Long Short-Term Memory cell, or a Gated Recurrent Unit.
+  %}  \label{fig:intro-rnn}  
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.45\linewidth}
+  \resizebox{\columnwidth}{!}
+    {
+    \input{gfx/ar_model_tikz}%
+    }
+   % \caption{
+    %Convolutional Autoregressive Architecture.
+    % The illustrated model can be any feed-forward neural network architecture.  
+    %} \label{fig:intro-ar}  
+  \end{subfigure}
+  %\caption{
+%  Comparison between Recurrent and Autoregressive architectures for computing $\hat{x}_t$. Note that to estimate $\hat{x}_t$ accurately, the RNN needs to calculate its output multiple times, while the autoregressive model only needs to calculate its output once. 
+  %}
+\end{figure}  
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{block}{Recurrent architectures}
+\protect\hypertarget{recurrent-architectures}{}
+Condition \(p(x_t|x_{<t})\) through one or more hidden states \(h_t\)
+passed between timesteps: \[
+p(x_t, h_t | x_{<t}) = p(x_t | x_{t-1}, h_{t-1})
+\]
+\end{block}
+\end{column}
+
+\begin{column}{0.48\textwidth}
+\begin{block}{Autoregressive Architectures}
+\protect\hypertarget{autoregressive-architectures}{}
+Condition \(p(x_t|x_{<t})\) by viewing a receptive field of size \(R\)
+of the input sequence. \[
+p(\mathbf{x}) = \prod^N_{t=R+1} p(x_t | x_{\geq t-R+1, <t})
+\]
+\end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{WaveNet - Convolutional Autoregressive Sequence Modelling}
+\protect\hypertarget{wavenet---convolutional-autoregressive-sequence-modelling}{}
+\begin{figure}
+    \centering
+    \resizebox{0.7\columnwidth}{!}{
+    \input{gfx/wavenet_tikz}}
+    %\caption{
+    %Illustration of a 4-layer WaveNet architecture with exponentially increasing dilation $d_i=2^i, i\in [0, 3]$ and kernel size 2.
+    %This results in a receptive field of size $2^4=16$. 
+    %}
+    %\label{fig:intro-wavenet}
+\end{figure}
+
+\begin{itemize}
+\tightlist
+\item
+  Common vocoder in Speech To Text production systems
+\item
+  No ``hidden state'' for representing earlier timesteps
+\item
+  Constrained to look back within receptive field
+\end{itemize}
+\end{frame}
+
+\hypertarget{problem-and-hypotheses}{%
+\section{Problem and Hypotheses}\label{problem-and-hypotheses}}
+
+\begin{frame}{Main Problem with WaveNet \ldots{}}
+\protect\hypertarget{main-problem-with-wavenet}{}
+\begin{itemize}
+\tightlist
+\item
+  excelling at capturing local signal structure
+\item
+  missing long-range correlations
+\item
+  low receptive field (300ms)
+\item
+  audio generation sounds like babbling
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Hypotheses Investigated}
+\protect\hypertarget{hypotheses-investigated}{}
+\begin{enumerate}
+\tightlist
+\item
+  WaveNet's receptive field is the main limiting factor for modeling
+  long-range dependencies.
+\item
+  WaveNet's stacked convolutional layers learn good representations of
+  speech.
+\item
+  WaveNet's hierarchical structure makes it suitable to learn priors
+  over representations of speech such as text.
+\item
+  A large WaveNet architecture trained on speech can generate coherent
+  words and sentence fragments
+\end{enumerate}
+\end{frame}
+
+\hypertarget{experiments}{%
+\section{Experiments}\label{experiments}}
+
+\begin{frame}{Experiment overview}
+\protect\hypertarget{experiment-overview}{}
+\end{frame}
+
+\begin{frame}{Expanding Receptive Field By Stacking - Setup}
+\protect\hypertarget{expanding-receptive-field-by-stacking---setup}{}
+\begin{figure}
+\centering
+\resizebox{\columnwidth}{!}{
+\input{gfx/stacking_tikz}
+}\end{figure}
+\end{frame}
+
+\begin{frame}{Expanding Receptive Field By Stacking - Results}
+\protect\hypertarget{expanding-receptive-field-by-stacking---results}{}
+TODO insert result table here
+\end{frame}
+
+\begin{frame}{Expanding Receptive Field By Stacking - Conclusions}
+\protect\hypertarget{expanding-receptive-field-by-stacking---conclusions}{}
+TODO Conclusion
+\end{frame}
+
+\begin{frame}{Latent space of stacked WaveNet output - Setup}
+\protect\hypertarget{latent-space-of-stacked-wavenet-output---setup}{}
+\end{frame}
+
+\begin{frame}{WaveNet as a Language Model - Setup}
+\protect\hypertarget{wavenet-as-a-language-model---setup}{}
+\end{frame}
+
+\begin{frame}{WaveNet as a Language Model - Results}
+\protect\hypertarget{wavenet-as-a-language-model---results}{}
+\end{frame}
+
+\begin{frame}{WaveNet as an ASR preprocessor - setup}
+\protect\hypertarget{wavenet-as-an-asr-preprocessor---setup}{}
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.5\linewidth}
+        \resizebox{\columnwidth}{!}{
+            \input{gfx/wavenet_asr_tikz}
+        }
+    %\caption{Setup of the WaveNet-LSTM ASR experiment.}
+    %\label{fig:wavenet-asr}
+    \end{subfigure}%
+    \begin{subfigure}[b]{0.5\linewidth}
+        \resizebox{\columnwidth}{!}{
+            \input{gfx/lstm_asr_tikz}
+        }
+    %\caption{Setup of the LSTM ASR experiment.}
+    %\label{fig:lstm-asr}
+    \end{subfigure}
+    %\caption{
+    %Comparison of the WaveNet-LSTM and LSTM ASR experiment setups.
+    %}
+\end{figure}
+
+\end{frame}
+
+\hypertarget{conclusions}{%
+\section{Conclusions}\label{conclusions}}
+
+\end{document}

@@ -1,0 +1,16 @@
+\section{Conclusion}
+In this paper we studied convolutional autoregressive models and their limits for unconditional speech generation. 
+We adapted the WaveNet to simultaneously predict multiple future timesteps by stacking audio samples in order to increase the receptive field. 
+We found WaveNet's inability to produce semantically coherent speech samples to not be due to limited receptive field size alone. 
+Furthermore, we provided evidence that WaveNet representations are useful as input for a downstream automatic speech recognition task. 
+We showed that WaveNet architectures have limited language modelling capabilities compared to similarly structured convolutional autoregressive language models, and attribute the lacking semantic coherence in speech samples to this. 
+We expect that further refinement of the model structure (including intermediate downsampling, or variable dimension residual blocks) could allow for a WaveNet-type model to generate speech that is more semantically coherent. 
+
+% \begin{enumerate}
+%     \item Our results show that WaveNet is limited from generating semantically sound audio samples
+%     \item Our ASR experiments suggest that WaveNet captures some useful semantic information.
+%     \item We observe limited Language Modelling capabilities when using the WaveNet on text. 
+%     \item We attribute the limited semantic coherence of our samples to WaveNet's limited Language modelling capabilities.
+%     \item We expect that further refinement of the model structure (including downsampling, pooling, or variable sized residual channels) would ameliorate this issue. 
+% \end{enumerate}
+    

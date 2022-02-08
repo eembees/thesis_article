@@ -1,0 +1,144 @@
+\section{Introduction}\label{sec:intro}
+
+Learning to generate realistic time series remains a fundamental challenge for machine learning systems.
+Deep Neural Networks (DNNs) have shown great promise at modeling complex datasets by learning a hierarchy of abstractions within data.
+ \cite{bengio_representation_2013, bengio_neural_2003}
+Specifically, Convolutional Neural Networks (CNNs) learn convolution filters at gradually increasing scales, extending to high-level structural representations \cite{krizhevsky_imagenet_2012, lecun_convolutional_1998}.
+As a result, DNNs are now commonplace for non-linear modeling relationships in both sequential and non-sequential data
+\cite{goodfellow_deep_2016, maaloe_auxiliary_nodate, oord_wavenet_2016, thomsen_deepfret_2020}.
+
+When modeling data, we optimize the model's likelihood $p(\dot)$ over the data $\mathbf{x}$.
+For sequence modeling, we calculate the likelihood of each step of the data $x_t\in\mathbf{x}$ conditioned on all earlier sequence steps, i.e.
+\begin{equation}\label{eq:llh}
+    p(\mathbf{x}) = \prod^N_{t=1}  p(x_t | x_{<t}) , \mathbf{x}\in \mathbb{R}^N
+\end{equation}
+
+The most commonly used models for sequential data are based on  Recurrent Neural Network (RNN) units, more specifically, Long Short-Term Memory (LSTM) and Gated Recurrent Units (GRU) \cite{hochreiter_long_1997, karim_lstm_2018, sundermeyer_lstm_2012, cho_learning_2014}.
+Recurrent architectures condition the likelihood in \cref{eq:llh} on earlier timesteps through one or more "hidden states" $h_t$ for each timestep $x_t$, as shown in \cref{fig:intro-rnn}, i.e.
+\begin{equation}\label{eq:llh-rnn}
+    p(x_t, h_t | x_{<t}) = p(x_t | x_{t-1}, h_{t-1})
+\end{equation}
+
+This structure allows architectures with recurrent units to model arbitrarily long sequences with unbounded context \cite{dauphin_language_2017}.
+However, the same recurrence causes a series of problems in training neural networks. 
+Recurrent architectures depend on backpropagation through time (BPTT) to accurately calculate gradients. 
+This type of backpropagation involves calculating gradients over the entire input sequence for each weight update. 
+For a sequence of length $N$, the derivative of the weights with respect to the $i$th element in the sequence is calculated $N-i$ times, which results in an $\mathcal{O}(n^2)$ complexity for a single example \cite{williams_gradient-based_1995}.
+Apart from being computationally expensive, this approach can render model training unstable, as small perturbations in the input can have a "butterfly effect" on the gradient computation - this is commonly known as vanishing and exploding gradients \cite{cuellar_application_2006}.
+
+% This backpropagation slows down training and leaves the gradient updates in recurrent architectures susceptible to variations in input sample order. 
+% As a result, training with backpropagation through time is unstable, as vanishing and exploding gradients commonly occur in recurrent architectures. \cite{cuellar_application_2006}
+
+
+
+Alternative to recurrent architectures, convolutional autoregressive architectures model the likelihood in \cref{eq:llh} by limiting the input sequence to a "receptive field" (RF) of size $R$.
+This is shown in \cref{fig:intro-ar}.
+For convolutional autoregressive models, the hidden state $h_t$ disappears from \cref{eq:llh-rnn}, and we can express the likelihood of a single timestep as a function of the element and the preceding $R$ elements of the sequence: 
+\begin{equation}
+    p(x_t | x_{\geq(t-R-1), <t}) = f(x_t, x_{\geq(t-R-1), <t})
+\end{equation}\label{eq:llh-ar-rf}
+
+This renders the likelihood of the data, \cref{eq:llh}, as a product of these outputs, where the likelihood of each timestep can be computed independently of one another:
+\begin{equation}
+    p(\mathbf{x}) = \prod^N_{t=R+1}  p(x_t | x_{\geq(t-R-1), <t}) = \prod^N_{t=R+1} f(x_t, x_{\geq(t-R-1), <t})
+\end{equation}\label{eq:llh-ar-rf-long}
+
+
+The "stateless" property of convolutional autoregressive models speeds up training, as the model can train on all steps of the input sequence in parallel \cite{salimans_pixelcnn_2017}.
+However, this property limits convolutional autoregressive models compared to RNNs; autoregressive models do not natively model data dependencies longer than their receptive field.
+\footnote{
+When training RNNs with truncated backpropagation through time - the truncation effectively enforces a "receptive field" of the input sequence for the sake of stability and faster convergence
+\cite{miller_stable_2019, cuellar_application_2006}.
+}
+
+
+\begin{figure}[t]  
+\centering 
+  \begin{subfigure}[b]{0.45\linewidth}
+  \resizebox{\columnwidth}{!}
+    {
+    \input{gfx/rnn_model_tikz}%
+    }
+  \caption{Recurrent Architecture. The recurrent unit can be either a Recurrent Neural Network, a Long Short-Term Memory cell, or a Gated Recurrent Unit.
+  } \label{fig:intro-rnn}  
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.45\linewidth}
+  \resizebox{\columnwidth}{!}
+    {
+    \input{gfx/ar_model_tikz}%
+    }
+    \caption{
+    Convolutional Autoregressive Architecture.
+    The illustrated model can be any feed-forward neural network architecture.  
+    } \label{fig:intro-ar}  
+  \end{subfigure}
+  \caption{
+  Comparison between Recurrent and Autoregressive architectures for computing $\hat{x}_t$. Note that to estimate $\hat{x}_t$ accurately, the RNN needs to calculate its output multiple times, while the autoregressive model only needs to calculate its output once. 
+  }
+\end{figure}  
+
+% FROM HERE ON, WaveNet introduction
+The WaveNet is a convolutional autoregressive model for generating high-fidelity audio, using dilated causal convolutions to maximize the receptive field and reduce training cost \cite{oord_wavenet_2016, kalchbrenner_neural_2017}.
+% The WaveNet uses dilated causal convolutions with the last input timestep masked to enforce next-step prediction.
+Dilated convolution layers inflate the kernel size by a dilation rate $d$ by inserting $d-1$ "holes" between kernel elements
+\cite{dutilleux_implementation_1990}.
+WaveNets stack dilated convolution layers with exponentially increasing dilation factors, ensuring that every time step is seen once by the network, as shown in \cref{fig:intro-wavenet}.
+Dilated convolutional layers allow WaveNets to have exponentially growing receptive fields, so stacks of dilated convolution appear as a more lightweight alternative to regular convolutional setups with similar receptive fields
+\cite{yu_multi-scale_2016}.
+A more detailed comparison of the number of weights is found in \cref{appx:dilation-weights}.
+Reusing weights across the input also prevents gradient collapse backward in time, as the same weights are reused across the receptive field.
+% TODO: move to model section?
+
+WaveNet's intended use is a component of larger Text-To-Speech (TTS) systems, as a strong autoregressive decoder from predicted spectrograms to high-fidelity audio. 
+\cite{wang_tacotron_2017, oord_parallel_2017, oord_neural_2018, chorowski_unsupervised_2019}
+Notably, the VQ-VAE uses conditioned WaveNets for decoding audio from latent representations and has successfully generated adjacent phonemes and word fragments. \cite{oord_neural_2018, garbacea_low_2019, dieleman_variable-rate_2021}
+Likewise, modern production systems for TTS like Tacotron 2 use WaveNet to decode sequences of Mel spectrograms and similar audio representations in place of the Griffin-Lim audio reconstruction algorithm \cite{shen_natural_2018}.
+On the other hand, autoregressive models have received criticism for excelling at capturing local signal structure while missing long-range correlations. \cite{dieleman_challenge_2018}
+The original WaveNet paper discusses the same problems and attributes the low power in modeling long-range correlations to the limited receptive field of their architecture. \cite{oord_wavenet_2016, shen_natural_2018}
+This presents a problem, as the receptive field of the WaveNet architecture is about 300 ms, significantly less than a sequence of words, much less a complete sentence.\cite{oord_wavenet_2016}
+An increased receptive field is unavoidable for a deterministic autoregressive model like WaveNet to model longer-range dependencies.
+
+
+For a convolutional autoregressive model to generate realistic-sounding speech, it must contain some form of language modeling capability.
+Stacked convolutional layers learn arbitrarily large contexts with multiple hierarchies of abstraction, given a sufficiently large input size \cite{lecun_convolutional_1998}. 
+As language contains a hierarchical structure, phonemes making up words, which build phrases and construct sentences, we expect a convolutional model like WaveNet to model language well.
+Other convolutional autoregressive models have been reported to rival LSTM-based architectures for language modeling \cite{bai_empirical_2018}.
+Notably, Dauphin and collaborators used stacks of gated convolutional units to calculate the language context from a "patch" of $k$ preceding words \cite{dauphin_language_2017}.
+As convolutional autoregressive architectures model both audio and text well, we hypothesize that a WaveNet model can produce coherent speech learned directly from audio if the receptive field is large enough.
+
+
+\paragraph{In this work} we investigate whether a WaveNet architecture learns higher-level semantic information within an audio sample. 
+We investigate this by probing the following hypotheses:
+\begin{enumerate}
+    \item\label{asmpt:rf-first} WaveNet's receptive field is the main limiting factor for modeling long-range dependencies. Increasing the receptive field will increase the predictive power of the model.
+    \item\label{asmpt:represent} WaveNet's stacked convolutional layers learn good representations of speech, fully or partially extracting semantic features in audio.
+    \item\label{asmpt:lang-mod} WaveNet's hierarchical structure makes it suitable to learn priors over representations of speech such as text. 
+    \item\label{asmpt:end2end} Finally, if hypotheses \ref{asmpt:represent} and \ref{asmpt:lang-mod} find support, a sufficiently large WaveNet architecture trained on speech can generate coherent words and sentence fragments.
+\end{enumerate}
+
+
+\begin{figure}
+    \centering
+    \resizebox{0.7\columnwidth}{!}{
+    \input{gfx/wavenet_tikz}}
+    \caption{
+    Illustration of a 4-layer WaveNet architecture with exponentially increasing dilation $d_i=2^i, i\in [0, 3]$ and kernel size 2.
+    This results in a receptive field of size $2^4=16$. 
+    }
+    \label{fig:intro-wavenet}
+\end{figure}
+
+% In addition, we investigate the tradeoff between the number of residual channels and the number of dilation cycles in the WaveNet architecture in terms of performance. 
+% Finally, we provide an analysis of the performance limits of the WaveNet when using a categorical output distribution for predicting multiple timesteps in the future. 
+
+% \paragraph{In this work} we present the following contributions:
+% \begin{itemize}
+%     \item We demonstrate that WaveNet's chief performance limit is the number of residual channels in its architecture, rather than it's gross receptive field.
+%     \item We report comparable likelihood scores between WaveNet and other generative sequence models.
+%     \item We analyze WaveNet's performance using both categorical and DMoL output distributions.
+% \end{itemize}
+
+
+
+

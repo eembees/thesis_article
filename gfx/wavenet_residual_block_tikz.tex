@@ -1,0 +1,93 @@
+\begin{tikzpicture}[  node distance = 5mm,]
+    %[transform canvas={scale=0.5}]
+    % \tikzset{
+    %     myarrow/.style={->, >=latex', shorten >=1pt, thick},
+    % }
+
+    % Inside res stack
+    % Input node
+
+    \node[circle, minimum size = 3mm,draw,% fill=orange!30,
+    ] (Res-Input) at (0,0) {};
+
+
+    \node[rectangle,
+        fill=green!30,draw,
+        above=of Res-Input,
+        align=center] (Dilated-Conv) {Dilated \\ Convolution};
+
+    \path (Res-Input.north) -- node (Res-Empty-Input-Conv) {} (Dilated-Conv.south);
+
+    \node[circle,
+        minimum size = 10mm,
+        draw,
+        fill=orange!30,
+        above right=of Dilated-Conv,
+    ] (Res-Sigmoid) {$\sigma$};
+
+    \node[circle,
+        minimum size = 10mm,
+        draw,
+        fill=orange!30,
+        above left=of Dilated-Conv,
+    ] (Res-Tanh) {tanh};
+
+    % invisible node in middle 
+
+    \path (Res-Tanh.east) -- node (Res-Empty-Res-Sigmoid) {} (Res-Sigmoid.west);
+
+
+    \node[circle,
+        minimum size = 10mm,
+        draw,
+        fill=orange!30,
+        above=of Res-Empty-Res-Sigmoid,
+    ] (Res-Multiply) {$\times$};
+
+
+    \node[rectangle, fill=green!30,draw, above=of Res-Multiply, align=center] (Res-1x1) {Conv\\$1 \times 1$};
+    \node[circle, fill=orange!50,draw, minimum size = 10mm, above=of Res-1x1, align=center] (Res-Split) {$*$};
+    \node[circle,
+        minimum size = 10mm,
+        draw,
+        fill=orange!30,
+        above=of Res-Split,
+    ] (Res-Add) {$+$};
+
+    \node[circle, minimum size = 3mm,draw,above=of Res-Add] (Res-Add-Output) {};
+
+    \node[rectangle, fill=red!20,draw, right=of Res-Add-Output, align=center] (Res-Skip) {Skip};
+
+    \coordinate[left=of Res-Tanh] (a);
+    \coordinate[right=of Res-Sigmoid] (b);
+
+
+    % ARROWS
+    \draw[->] (Res-Input) -- (Dilated-Conv);
+    \draw[->] (Dilated-Conv) -| (Res-Tanh);
+    \draw[->] (Dilated-Conv) -| (Res-Sigmoid);
+
+    \draw[->] (Res-Tanh) |- (Res-Multiply);
+    \draw[->] (Res-Sigmoid) |- (Res-Multiply);
+
+    \draw[->] (Res-Multiply) -- (Res-1x1);
+    % \draw[->] (Res-1x1) -- (Res-Add) ;	
+
+    \draw[->] (Res-1x1) -- (Res-Split) ;
+
+    \draw[->] (Res-Split) -| (Res-Skip) ;
+    \draw[->] (Res-Split) -- (Res-Add) ;
+
+    \draw[->] (Res-Empty-Input-Conv.center) -| (a)  |- (Res-Add);
+    \draw[->, line width=2] (Res-Add) -- (Res-Add-Output);
+
+
+    \node[fill=white, left=of Res-Split, align=center, draw, dashed] (Res-Split-Label) {Split/Copy};
+    \draw[dashed] (Res-Split) -- (Res-Split-Label);
+    %%% RECTANGLE AROUND ALL 
+
+    \node[draw, thick, dotted, rounded corners, inner xsep=1em, inner ysep=3mm, fit=(Res-Input) (a) (b) (Res-Add)] (box) {};
+    \node[fill=white] at (box.south) {Residual Connections};
+
+
+\end{tikzpicture}

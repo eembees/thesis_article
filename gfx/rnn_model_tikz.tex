@@ -1,0 +1,57 @@
+\begin{tikzpicture}%[transform canvas={scale=0.5}]
+    % Input nodes
+    \node[circle, 
+        minimum size = 10mm,
+        draw,
+        % fill=orange!30
+    ] (Input-0) at (0,0) {$x_{t}$};
+    
+    \foreach \i in {1,2,3}
+    {
+        \node[circle, 
+            minimum size = 10mm,
+            draw,
+            % fill=orange!30,
+            ] (Input-\i) at (-2*\i,0) {$x_{t-\i}$};
+    }
+    \node[circle, minimum size = 10mm,% fill=orange!30,
+            ] (Input-ldots) at (-2*4,0) {\dots};
+    \node[circle, minimum size = 10mm,% fill=orange!30,
+            above=of Input-ldots] (RNN-ldots) {\dots};
+    
+    % Draw RNNs
+    \foreach \i in {0,1,2,3}
+    {
+    \node[rectangle, draw, above=of Input-\i, minimum height=1cm, minimum width=1cm] (RNN-\i) {RNN};
+    }
+
+    % Draw Outputs
+
+    \node[circle, minimum size = 10mm, draw, fill=gray!30, above=of RNN-0] (Output-0) {$\hat{x}_{t+1}$};
+    \node[circle, minimum size = 10mm, draw, fill=gray!30, above=of RNN-1] (Output-1) {$\hat{x}_{t}$};    
+    \node[circle, minimum size = 10mm, draw, fill=gray!30, above=of RNN-2] (Output-2) {$\hat{x}_{t-1}$};
+    \node[circle, minimum size = 10mm, draw, fill=gray!30, above=of RNN-3] (Output-3) {$\hat{x}_{t-2}$};
+    % draw arrows
+    \foreach \i in {0,1,2,3}
+    {
+    \draw[->] (Input-\i.north) -- (RNN-\i.south);
+    \draw[->] (RNN-\i.north) -- (Output-\i.south);
+    }
+
+    \draw[->,dashed] (RNN-ldots.east) -- (RNN-3.west) ;
+    \draw[->] (RNN-3.east) -- (RNN-2.west) node[midway, above] {$h_{t-3}$};
+    \draw[->] (RNN-2.east) -- (RNN-1.west) node[midway, above] {$h_{t-2}$};
+    \draw[->] (RNN-1.east) -- (RNN-0.west) node[midway, above] {$h_{t-1}$};
+    \draw[->] (RNN-0.east) -- +(20pt,0) node[midway, above] {$h_{t}$};
+    
+    % % Arrow from Hat to next 
+    % \draw[->] (Output-3.east) edge[bend right=15] (Input-2.west);
+    % \draw[->] (Output-2.east) edge[bend right=15] (Input-1.west);
+    % \draw[->] (Output-1.east) edge[bend right=15] (Input-0.west);
+
+    \draw[->, dashed] (Output-1.east) 
+        to[out=-30, in=150]
+        % edge[bend left=30] 
+    (Input-0.west) node[left] {$\mathcal{L}_{t}$}   ;
+
+\end{tikzpicture}%
