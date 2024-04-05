@@ -4,8 +4,10 @@
 %
 \documentclass[
   ignorenonframetext,
+  aspectratio=169,
 ]{beamer}
 \usepackage{pgfpages}
+\input{preamble_beamer.tex}
 \setbeamertemplate{caption}[numbered]
 \setbeamertemplate{caption label separator}{: }
 \setbeamercolor{caption name}{fg=normal text.fg}
@@ -77,11 +79,17 @@
 \IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
 \hypersetup{
   pdftitle={Generative Modelling of Sequential Data},
-  pdfauthor={Magnus Sletfjerding},
+  pdfauthor={Magnus Berg Sletfjerding},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 \urlstyle{same} % disable monospaced font for URLs
 \newif\ifbibliography
+\usepackage{longtable,booktabs}
+\usepackage{caption}
+% Make caption package work with longtable
+\makeatletter
+\def\fnum@table{\tablename~\thetable}
+\makeatother
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
@@ -89,7 +97,7 @@
 
 \title{Generative Modelling of Sequential Data}
 \subtitle{M.Sc. thesis in collaboration with Corti ApS}
-\author{Magnus Sletfjerding}
+\author{Magnus Berg Sletfjerding}
 \date{February 9th, 2022}
 
 \begin{document}
@@ -103,9 +111,38 @@
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
-\begin{frame}{Why is it interesting to study hierarchies of information
-in time series?}
-\protect\hypertarget{why-is-it-interesting-to-study-hierarchies-of-information-in-time-series}{}
+\begin{frame}{Supervised and Unsupervised learning}
+\protect\hypertarget{supervised-and-unsupervised-learning}{}
+\begin{figure}
+\centering
+\resizebox{!}{0.5\textheight}{
+\input{gfx/sup_unsup_tikz}
+}\end{figure}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{block}{Supervised Learning}
+\protect\hypertarget{supervised-learning}{}
+Learns a mapping from data \(\mathbf{x}\) to labels \(\mathbf{y}\):\\
+\[
+p(\mathbf{y}|\mathbf{x}) = \sum^N_{i=1} p(y_i| x_i)
+\]
+\end{block}
+\end{column}
+
+\begin{column}{0.48\textwidth}
+\begin{block}{Unsupervised Learning}
+\protect\hypertarget{unsupervised-learning}{}
+Learns the structure of the data \(\mathbf{x}\): \[
+p(\mathbf{x}) = \sum^N_{i=1} p(x_t)
+\]
+\end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why study hierarchies of information in sequences?}
+\protect\hypertarget{why-study-hierarchies-of-information-in-sequences}{}
 \begin{itemize}
 \item
   Most data we work with has some hierarchical structure
@@ -117,6 +154,7 @@ in time series?}
   \item
     Video
   \item
+    Proteins/DNA
   \end{itemize}
 \item
   Human brains process hierarchies of information natively
@@ -127,15 +165,15 @@ in time series?}
     Human-like AI requires hierarchical processing
   \end{itemize}
 \item
-  All real-world data has a time dimension.
+  All real-world data has a sequential dimension - time!
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Sequence modeling}
-\protect\hypertarget{sequence-modeling}{}
-Sequence modeling optimize the model's likelihood \(p(\cdot)\) over the
-data \(\mathbf{x}\), by conditioning the probability of \(x_t\) on
-previous timesteps: \[
+\begin{frame}{Unsupervised sequence modeling}
+\protect\hypertarget{unsupervised-sequence-modeling}{}
+Unsupervised sequence modeling optimize the likelihood \(p(\cdot)\) of
+the data \(\mathbf{x}\), calculated by conditioning the likelihood of
+\(x_t\) on previous timesteps: \[
 p(\mathbf{x}) = \prod^N_{t=1}  p(x_t | x_{<t}) , \hspace{1cm}  \mathbf{x}\in \mathbb{R}^N
 \]
 \end{frame}
@@ -149,8 +187,6 @@ p(\mathbf{x}) = \prod^N_{t=1}  p(x_t | x_{<t}) , \hspace{1cm}  \mathbf{x}\in \ma
     {
     \input{gfx/rnn_model_tikz}%
     }
-  %\caption{Recurrent Architecture. %The recurrent unit can be either a Recurrent Neural Network, a Long Short-Term Memory cell, or a Gated Recurrent Unit.
-  %}  \label{fig:intro-rnn}  
   \end{subfigure}
   \hfill
   \begin{subfigure}[b]{0.45\linewidth}
@@ -158,10 +194,6 @@ p(\mathbf{x}) = \prod^N_{t=1}  p(x_t | x_{<t}) , \hspace{1cm}  \mathbf{x}\in \ma
     {
     \input{gfx/ar_model_tikz}%
     }
-   % \caption{
-    %Convolutional Autoregressive Architecture.
-    % The illustrated model can be any feed-forward neural network architecture.  
-    %} \label{fig:intro-ar}  
   \end{subfigure}
   %\caption{
 %  Comparison between Recurrent and Autoregressive architectures for computing $\hat{x}_t$. Note that to estimate $\hat{x}_t$ accurately, the RNN needs to calculate its output multiple times, while the autoregressive model only needs to calculate its output once. 
@@ -209,6 +241,8 @@ p(\mathbf{x}) = \prod^N_{t=R+1} p(x_t | x_{\geq t-R+1, <t})
 \item
   Common vocoder in Speech To Text production systems
 \item
+  Makes use of dilated convolution to inflate receptive field
+\item
   No ``hidden state'' for representing earlier timesteps
 \item
   Constrained to look back within receptive field
@@ -223,13 +257,14 @@ p(\mathbf{x}) = \prod^N_{t=R+1} p(x_t | x_{\geq t-R+1, <t})
 \begin{itemize}
 \tightlist
 \item
-  excelling at capturing local signal structure
+  Local signal structure\\
 \item
-  missing long-range correlations
+  Missing long-range correlations
 \item
-  low receptive field (300ms)
+  Low receptive field (300ms)
 \item
-  audio generation sounds like babbling
+  Generated audio sounds like babbling if not conditioned on phoneme or
+  text representations
 \end{itemize}
 \end{frame}
 
@@ -257,65 +292,816 @@ p(\mathbf{x}) = \prod^N_{t=R+1} p(x_t | x_{\geq t-R+1, <t})
 
 \begin{frame}{Experiment overview}
 \protect\hypertarget{experiment-overview}{}
+\begin{enumerate}
+\tightlist
+\item
+  Expanding Receptive Field by Stacking
+\item
+  Latent Space of Stacked WaveNets
+\item
+  WaveNet as a Language Model
+\item
+  WaveNet as an ASR preprocessor
+\end{enumerate}
 \end{frame}
 
-\begin{frame}{Expanding Receptive Field By Stacking - Setup}
+\begin{frame}{Expanding Receptive Field by Stacking - Setup}
 \protect\hypertarget{expanding-receptive-field-by-stacking---setup}{}
+\begin{block}{Hypothesis tested}
+\protect\hypertarget{hypothesis-tested}{}
+\begin{enumerate}[<+->]
+\tightlist
+\item
+  WaveNet's receptive field is the main limiting factor for modeling
+  long-range dependencies.
+\end{enumerate}
+\end{block}
+
+\begin{block}{Setup}
+\protect\hypertarget{setup}{}
+Transform x as:
+
 \begin{figure}
 \centering
 \resizebox{\columnwidth}{!}{
 \input{gfx/stacking_tikz}
 }\end{figure}
+\end{block}
 \end{frame}
 
-\begin{frame}{Expanding Receptive Field By Stacking - Results}
+\begin{frame}{Visualization of stacking on Sin curve}
+\protect\hypertarget{visualization-of-stacking-on-sin-curve}{}
+\begin{figure}
+\centering
+\resizebox{1.0\columnwidth}{!}{
+\begin{tikzpicture}
+\input{gfx/sin_receptive_field_tikz.tex}
+}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Expanding Receptive Field by Stacking - Results}
 \protect\hypertarget{expanding-receptive-field-by-stacking---results}{}
-TODO insert result table here
+\begin{figure}
+\centering
+\resizebox{!}{0.9\textheight}{
+\begin{tikzpicture}
+\begin{axis}[
+    title={WaveNet results on stacked audio samples},
+    xlabel={Stacking ratio $S$},
+    ylabel={TIMIT test set Likelihood [BPD]},
+    %xmin=0, xmax=16,
+    %ymin=10, ymax=13,
+    ymajorgrids=true,
+    grid style=dashed,
+    legend pos=south east,
+]
+\addplot[
+    color=blue,
+    mark=square,
+    ]
+    coordinates {
+    (2,11.835)(4, 12.331)(8, 12.621)(16, 13.060)
+    };
+    \addlegendentry{N=5 C=64}
+\addplot[
+    color=red,
+    mark=square,
+    ]
+    coordinates {
+    (2,11.878)(4, 12.249)(8, 12.503)(16, 12.861)
+    };
+    \addlegendentry{N=5 C=92}
+
+\addplot[
+    color=green,
+    mark=square,
+    ]
+    coordinates {
+    (2,12.156)(4, 12.312)(8, 12.740)(16, 13.042)
+    };
+    \addlegendentry{N=1 C=92}
+    
+\end{axis}
+\end{tikzpicture}
+}\end{figure}
 \end{frame}
 
-\begin{frame}{Expanding Receptive Field By Stacking - Conclusions}
+\begin{frame}{Expanding Receptive Field by Stacking - Conclusions}
 \protect\hypertarget{expanding-receptive-field-by-stacking---conclusions}{}
-TODO Conclusion
+\begin{enumerate}
+\tightlist
+\item
+  Stacking does not improve likelihoods significantly.
+\item
+  Increasing residual channels increases evaluation likelihoods.
+\end{enumerate}
+
+Does this mean that the WaveNet does not extract any semantic
+information at all?
+
+Is this a failure to measure the output correctly?
 \end{frame}
 
-\begin{frame}{Latent space of stacked WaveNet output - Setup}
-\protect\hypertarget{latent-space-of-stacked-wavenet-output---setup}{}
+\begin{frame}{Latent space of stacked WaveNet - Setup}
+\protect\hypertarget{latent-space-of-stacked-wavenet---setup}{}
+\begin{block}{Hypothesis tested}
+\protect\hypertarget{hypothesis-tested-1}{}
+\begin{enumerate}[<+->]
+\setcounter{enumi}{1}
+\tightlist
+\item
+  WaveNet's stacked convolutional layers learn good representations of
+  speech.
+\end{enumerate}
+\end{block}
 \end{frame}
 
-\begin{frame}{WaveNet as a Language Model - Setup}
-\protect\hypertarget{wavenet-as-a-language-model---setup}{}
-\end{frame}
-
-\begin{frame}{WaveNet as a Language Model - Results}
-\protect\hypertarget{wavenet-as-a-language-model---results}{}
+\begin{frame}{Latent space of stacked WaveNet - Results}
+\protect\hypertarget{latent-space-of-stacked-wavenet---results}{}
+\begin{figure}
+\includegraphics[width=0.5\columnwidth]{ 
+        gfx/latent_exploration_PCA_S=2_C=64_N=5_L=10.png}%
+\includegraphics[width=0.5\columnwidth]{
+        gfx/latent_exploration_PCA_S=8_C=64_N=5_L=10.png
+        }%
+\end{figure}
 \end{frame}
 
 \begin{frame}{WaveNet as an ASR preprocessor - setup}
 \protect\hypertarget{wavenet-as-an-asr-preprocessor---setup}{}
-\begin{figure}
-    \centering
-    \begin{subfigure}[b]{0.5\linewidth}
-        \resizebox{\columnwidth}{!}{
-            \input{gfx/wavenet_asr_tikz}
-        }
-    %\caption{Setup of the WaveNet-LSTM ASR experiment.}
-    %\label{fig:wavenet-asr}
-    \end{subfigure}%
-    \begin{subfigure}[b]{0.5\linewidth}
-        \resizebox{\columnwidth}{!}{
-            \input{gfx/lstm_asr_tikz}
-        }
-    %\caption{Setup of the LSTM ASR experiment.}
-    %\label{fig:lstm-asr}
-    \end{subfigure}
-    %\caption{
-    %Comparison of the WaveNet-LSTM and LSTM ASR experiment setups.
-    %}
-\end{figure}
+\begin{block}{Hypothesis tested}
+\protect\hypertarget{hypothesis-tested-2}{}
+\begin{enumerate}[<+->]
+\setcounter{enumi}{1}
+\tightlist
+\item
+  WaveNet's stacked convolutional layers learn good representations of
+  speech.
+\end{enumerate}
+\end{block}
 
+\begin{block}{Idea}
+\protect\hypertarget{idea}{}
+Are WaveNet's unsupervised representations more useful for Speech
+Recognition models than raw audio?
+\end{block}
+\end{frame}
+
+\begin{frame}{WaveNet as an ASR preprocessor - setup (0 layers)}
+\protect\hypertarget{wavenet-as-an-asr-preprocessor---setup-0-layers}{}
+\begin{figure}
+\centering
+\resizebox{\columnwidth}{!}{
+\input{gfx/lstm_asr_tikz}
+}
+\end{figure}
+\end{frame}
+
+\begin{frame}{WaveNet as an ASR preprocessor - setup (3 layers)}
+\protect\hypertarget{wavenet-as-an-asr-preprocessor---setup-3-layers}{}
+\begin{figure}
+\centering
+\resizebox{!}{0.9\textheight}{
+\input{gfx/wavenet_asr_tikz}
+}
+\end{figure}
+\end{frame}
+
+\begin{frame}{WaveNet as an ASR preprocessor - Results}
+\protect\hypertarget{wavenet-as-an-asr-preprocessor---results}{}
+\begin{figure}
+\centering
+\resizebox{!}{\textheight}{
+\begin{tikzpicture}
+\begin{axis}[
+    title={WaveNet as ASR preprocessor},
+    xlabel={Number of WaveNet Layers used},
+    ylabel={CER on \texttt{clean-test}},
+    ymajorgrids=true,
+    grid style=dashed,
+    legend style={at={(axis cs:0,0.95)},anchor=north west},
+    legend cell align={left},
+]
+\addplot[
+    color=blue,
+    mark=square,
+    ]
+    coordinates {
+    (0,1.00)(10, 1.0)(20, 0.9965)(30, 0.9983)(40, 0.9983)(50, 0.9983)
+    };
+    \addlegendentry{10min}
+\addplot[
+    color=red,
+    mark=square,
+    ]
+    coordinates {
+    (0,0.691)(10,0.7066)(20, 0.7969)(30, 0.8681)(40, 0.7326)(50, 0.6701)
+    };
+    \addlegendentry{1h}
+
+\addplot[
+    color=green,
+    mark=square,
+    ]
+    coordinates {
+    (0,0.6050)(10,0.5122)(20, 0.4618)(30, 0.4184)(40, 0.4392)(50, 0.4757)
+    };
+    \addlegendentry{10h}
+    
+\end{axis}
+\end{tikzpicture}
+}\end{figure}
+\end{frame}
+
+\begin{frame}{WaveNet as an ASR preprocessor - Conclusions}
+\protect\hypertarget{wavenet-as-an-asr-preprocessor---conclusions}{}
+\begin{itemize}
+\item
+  Using WaveNet as a preprocessor decreases the loss when trained on the
+  1 hour and 10-hour training subsets.
+\item
+  The best performance occurs when using 30 layers of the WaveNet
+  trained on 10 hours of training data.
+\item
+  Notably, WaveNet's use as a preprocessor grows more competitive when
+  increasing the training data size.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{WaveNet as a Language Model - Setup}
+\protect\hypertarget{wavenet-as-a-language-model---setup}{}
+\begin{block}{Hypothesis tested}
+\protect\hypertarget{hypothesis-tested-3}{}
+\begin{enumerate}[<+->]
+\setcounter{enumi}{2}
+\tightlist
+\item
+  WaveNet's hierarchical structure makes it suitable to learn priors
+  over representations of speech such as text.
+\end{enumerate}
+\end{block}
+
+\begin{block}{Setup}
+\protect\hypertarget{setup-1}{}
+\end{block}
+\end{frame}
+
+\begin{frame}{WaveNet as a Language Model - Results}
+\protect\hypertarget{wavenet-as-a-language-model---results}{}
+\begin{table}[htb]
+    \centering
+    \begin{tabular}{l|c||c}
+        Model & Dataset & BPD (test) \\
+        \hline
+        Mogrifier LSTM \cite{melis_mogrifier_2020} & PTB & 1.083 \\
+        Temporal Convolutional Network \cite{bai_empirical_2018} & PTB & 1.31 \\
+        \hline
+        WaveNet N=5 L=4 R=24 [RF 126] & PTB & 1.835 \\
+        WaveNet N=5 L=4 R=32 [RF 126] & PTB & \textbf{1.666} \\
+        WaveNet N=5 L=4 R=48 [RF 126] & PTB & 1.678 \\
+        % WaveNet L=4 N=5 R=64 [RF 126] & Billion Word & 1.483 \\%1.677 \\
+    \end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}{WaveNet as a Language Model - Conclusions}
+\protect\hypertarget{wavenet-as-a-language-model---conclusions}{}
 \end{frame}
 
 \hypertarget{conclusions}{%
 \section{Conclusions}\label{conclusions}}
+
+\begin{frame}{Conclusions}
+\begin{longtable}[]{@{}ll@{}}
+\toprule
+\begin{minipage}[b]{0.83\columnwidth}\raggedright
+Hypothesis\strut
+\end{minipage} & \begin{minipage}[b]{0.11\columnwidth}\raggedright
+Support?\strut
+\end{minipage}\tabularnewline
+\midrule
+\endhead
+\begin{minipage}[t]{0.83\columnwidth}\raggedright
+WaveNet's receptive field is the main limiting factor for modeling
+long-range dependencies.\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedright
+No\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.83\columnwidth}\raggedright
+WaveNet's stacked convolutional layers learn good representations of
+speech.\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedright
+Yes\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.83\columnwidth}\raggedright
+WaveNet's hierarchical structure makes it suitable to learn priors over
+representations of speech such as text.\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedright
+No\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.83\columnwidth}\raggedright
+A large WaveNet architecture trained on speech can generate coherent
+words and sentence fragments\strut
+\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedright
+No\strut
+\end{minipage}\tabularnewline
+\bottomrule
+\end{longtable}
+\end{frame}
+
+\begin{frame}{References}
+\protect\hypertarget{references}{}
+\bibliography{vseq}
+\bibliographystyle{abbrv}
+\end{frame}
+
+\hypertarget{appendix-slides}{%
+\section{Appendix Slides}\label{appendix-slides}}
+
+\begin{frame}[fragile]{Experiment: WaveNet Gradient analysis over input
+space - 1}
+\protect\hypertarget{experiment-wavenet-gradient-analysis-over-input-space---1}{}
+\begin{block}{Explained}
+\protect\hypertarget{explained}{}
+Run gradient evaluation over a trained WaveNet model and visualize the
+outputs.
+\end{block}
+
+\begin{block}{Hypothesis tested}
+\protect\hypertarget{hypothesis-tested-4}{}
+\textbf{WaveNet uses the entirety of its receptive field for next-step
+prediction.}
+
+\begin{itemize}
+\item
+  Gradients in the end of the RF (close to output) are larger than the
+  gradients in the rest of the RF.
+\item
+  Gradients do NOT collapse to 0 around the beginning of the RF
+  (furthest away from output).
+\end{itemize}
+\end{block}
+
+\begin{block}{Method}
+\protect\hypertarget{method}{}
+\begin{enumerate}
+\tightlist
+\item
+  Calculate vector-Jacobian product with \texttt{torch.autograd}
+\item
+  Calculate norm with \texttt{torch.linalg.norm}
+\end{enumerate}
+\end{block}
+\end{frame}
+
+\begin{frame}{Experiment: WaveNet Gradient analysis over input space -
+2}
+\protect\hypertarget{experiment-wavenet-gradient-analysis-over-input-space---2}{}
+\begin{figure}[ht]
+%        \resizebox{\columnwidth}{!}{
+            \includegraphics[width=0.49\textwidth]{gfx/wavenet-8-4-64-epoch-70-gradients.png}%
+            \includegraphics[width=0.49\textwidth]{gfx/wavenet-8-4-64-epoch-70-gradients-zoom.png}
+ %       }
+\end{figure}
+\end{frame}
+
+\begin{frame}{Notation}
+\protect\hypertarget{notation}{}
+\begin{longtable}[]{@{}ll@{}}
+\toprule
+\begin{minipage}[b]{0.32\columnwidth}\raggedright
+Symbol\strut
+\end{minipage} & \begin{minipage}[b]{0.62\columnwidth}\raggedright
+Explanation\strut
+\end{minipage}\tabularnewline
+\midrule
+\endhead
+\begin{minipage}[t]{0.32\columnwidth}\raggedright
+\(x_i\),\(x_t\)\strut
+\end{minipage} & \begin{minipage}[t]{0.62\columnwidth}\raggedright
+The \(i\)th index of \(\mathbf{x}\), of size \(N\).
+\(x_i \in \mathbb{R}^N\). \(x_t\) is used when data is
+time-resolved.\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.32\columnwidth}\raggedright
+\(\mathbf{x}\)\strut
+\end{minipage} & \begin{minipage}[t]{0.62\columnwidth}\raggedright
+The data x, composed of vectors \(x_i\).
+\(\mathbf{x} \in \mathbb{R}^{T \times N}\)\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.32\columnwidth}\raggedright
+\(p_\theta(\cdot )\), \(p(\cdot )\)\strut
+\end{minipage} & \begin{minipage}[t]{0.62\columnwidth}\raggedright
+Likelihood function over model parameters \(\theta\). Denoted
+\(p(\cdot )\) for brevity\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.32\columnwidth}\raggedright
+\(\hat{x}_i\)\strut
+\end{minipage} & \begin{minipage}[t]{0.62\columnwidth}\raggedright
+Model prediction for \(x_i\).\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.32\columnwidth}\raggedright
+\(\mathcal{L}_{i}\)\strut
+\end{minipage} & \begin{minipage}[t]{0.62\columnwidth}\raggedright
+Loss function for \(i\)th index.\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.32\columnwidth}\raggedright
+\(R\)\strut
+\end{minipage} & \begin{minipage}[t]{0.62\columnwidth}\raggedright
+Receptive field size.\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.32\columnwidth}\raggedright
+\(S\)\strut
+\end{minipage} & \begin{minipage}[t]{0.62\columnwidth}\raggedright
+Size of stack size used in stack transformations\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.32\columnwidth}\raggedright
+\(d_i\)\strut
+\end{minipage} & \begin{minipage}[t]{0.62\columnwidth}\raggedright
+Dilation of \(i\)th layer in a WaveNet architecture\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.32\columnwidth}\raggedright
+\(C\)\strut
+\end{minipage} & \begin{minipage}[t]{0.62\columnwidth}\raggedright
+Number of residual channels\strut
+\end{minipage}\tabularnewline
+\bottomrule
+\end{longtable}
+\end{frame}
+
+\begin{frame}{Overview of Codebase}
+\protect\hypertarget{overview-of-codebase}{}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{itemize}
+\tightlist
+\item
+  Collaborative codebase with Jakob Havtorn and Lasse Borgholt (PhDs at
+  Corti)
+\item
+  Includes custom implementations of many modules in the
+\end{itemize}
+\end{column}
+
+\begin{column}{0.48\textwidth}
+TODO: Implementations to mention:
+
+\begin{itemize}
+\tightlist
+\item
+  Residual Stack
+\item
+  Categorical WaveNet
+\item
+  DMoL WaveNet
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Stacking Transformation}
+\protect\hypertarget{stacking-transformation}{}
+\[
+x^*_t = \begin{pmatrix}
+        x_{t} \\ \vdots \\ x_{t+S} \\
+    \end{pmatrix},
+    \hspace{1cm}
+    t\in\{1,S+1,\dots,T-S\}, \mathbf{x}^*\in\mathbb{R}^{N/S \times S}\mathbf{x}\in\mathbb{R}^{N}
+\]
+\end{frame}
+
+\begin{frame}{Residual Block of WaveNet}
+\protect\hypertarget{residual-block-of-wavenet}{}
+\begin{figure}
+    \centering
+    \resizebox{!}{0.9\textheight}{
+    \input{gfx/wavenet_residual_block_tikz}
+    %\caption{
+    %Overview of WaveNet's residual block. 
+    %The "Split/Copy" operation, representing the two configurations of the residual block is highlighted.
+    %}
+    %\label{fig:wavenet-res-block}
+   }
+\end{figure}
+\end{frame}
+
+\begin{frame}{Full WaveNet architecture}
+\protect\hypertarget{full-wavenet-architecture}{}
+\begin{figure}
+    \centering
+    \resizebox{!}{0.9\textheight}{
+    \input{gfx/wavenet_extended_arch}
+   }
+\end{figure}
+\end{frame}
+
+\begin{frame}{DMoL vs.~Categorical output distribution}
+\protect\hypertarget{dmol-vs.-categorical-output-distribution}{}
+\begin{block}{Discretized Mixture of Logistics}
+\protect\hypertarget{discretized-mixture-of-logistics}{}
+With a mixture of \(K\) logistic distributions, for all discrete values
+of \(x\) except edge cases: \[
+P(x|\pi, \mu, s) =CDF(x-0.5, x+0.5) = \sum_{i=1}^K \pi_i[\sigma(\frac{x +0.5 - \mu_i}{s_i}) - \sigma(\frac{x-0.5-\mu_i}{s_i}) ]
+\] Where \(\sigma(\cdot )\) is the logistic sigmoid:
+\(\sigma(x) = \frac{1}{1+e^x}\), \(\pi\) is the relative weight vector,
+\(\mu\) is the location vector and \(s\) is the scale vector.
+\end{block}
+
+\begin{block}{Softmax distribution}
+\protect\hypertarget{softmax-distribution}{}
+In a softmax distribution, the probability of the \(i\)th out of N
+discrete values is defined by: \[
+\sigma(\mathbf{x})_i = \frac{\exp(x_i)}{\sum_{j=1}^N \exp(x_j)}
+\]
+\end{block}
+\end{frame}
+
+\begin{frame}{Different tested embeddings for stacked WaveNet input}
+\protect\hypertarget{different-tested-embeddings-for-stacked-wavenet-input}{}
+\begin{longtable}[]{@{}llll@{}}
+\toprule
+\begin{minipage}[b]{0.39\columnwidth}\raggedright
+Embedding type\strut
+\end{minipage} & \begin{minipage}[b]{0.03\columnwidth}\raggedright
+Dim\strut
+\end{minipage} & \begin{minipage}[b]{0.08\columnwidth}\raggedright
+Number\strut
+\end{minipage} & \begin{minipage}[b]{0.39\columnwidth}\raggedright
+Note\strut
+\end{minipage}\tabularnewline
+\midrule
+\endhead
+\begin{minipage}[t]{0.39\columnwidth}\raggedright
+Lookup table embedding with input dimensionality \(S\times C\)\strut
+\end{minipage} & \begin{minipage}[t]{0.03\columnwidth}\raggedright
+\(128\)\strut
+\end{minipage} & \begin{minipage}[t]{0.08\columnwidth}\raggedright
+\(1024\)\strut
+\end{minipage} & \begin{minipage}[t]{0.39\columnwidth}\raggedright
+Outputs collapsed to silence (suspect too sparse embeddings)\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.39\columnwidth}\raggedright
+\(S\) embeddings convolved together\strut
+\end{minipage} & \begin{minipage}[t]{0.03\columnwidth}\raggedright
+128\strut
+\end{minipage} & \begin{minipage}[t]{0.08\columnwidth}\raggedright
+\(S\cdot 256\)\strut
+\end{minipage} & \begin{minipage}[t]{0.39\columnwidth}\raggedright
+White noise output.\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.39\columnwidth}\raggedright
+2 Layer perceptron with input size \(S\) and output size \(R\)\strut
+\end{minipage} & \begin{minipage}[t]{0.03\columnwidth}\raggedright
+\(R\)\strut
+\end{minipage} & \begin{minipage}[t]{0.08\columnwidth}\raggedright
+Continuous\strut
+\end{minipage} & \begin{minipage}[t]{0.39\columnwidth}\raggedright
+Final used embedding\strut
+\end{minipage}\tabularnewline
+\bottomrule
+\end{longtable}
+\end{frame}
+
+\begin{frame}{Overview of extra experiments}
+\protect\hypertarget{overview-of-extra-experiments}{}
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+\begin{minipage}[b]{0.26\columnwidth}\raggedright
+Model\strut
+\end{minipage} & \begin{minipage}[b]{0.35\columnwidth}\raggedright
+Dataset(s)\strut
+\end{minipage} & \begin{minipage}[b]{0.30\columnwidth}\raggedright
+Notes\strut
+\end{minipage}\tabularnewline
+\midrule
+\endhead
+\begin{minipage}[t]{0.26\columnwidth}\raggedright
+Single-Timestep WaveNet (softmax output)\strut
+\end{minipage} & \begin{minipage}[t]{0.35\columnwidth}\raggedright
+TIMIT\strut
+\end{minipage} & \begin{minipage}[t]{0.30\columnwidth}\raggedright
+Slow convergence compared to later DMoL\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.26\columnwidth}\raggedright
+Stacked WaveNet (softmax output)\strut
+\end{minipage} & \begin{minipage}[t]{0.35\columnwidth}\raggedright
+TIMIT, Librispeech\strut
+\end{minipage} & \begin{minipage}[t]{0.30\columnwidth}\raggedright
+Collapses to predict silence for all timesteps\strut
+\end{minipage}\tabularnewline
+\begin{minipage}[t]{0.26\columnwidth}\raggedright
+Single Timestep WaveNet\strut
+\end{minipage} & \begin{minipage}[t]{0.35\columnwidth}\raggedright
+Generated Sinusoids with periodically modulated pitch.\strut
+\end{minipage} & \begin{minipage}[t]{0.30\columnwidth}\raggedright
+Fails to follow modulation in pitch\strut
+\end{minipage}\tabularnewline
+\bottomrule
+\end{longtable}
+\end{frame}
+
+\begin{frame}{Phonemes in TIMIT}
+\protect\hypertarget{phonemes-in-timit}{}
+\begin{table}[htb]
+    \centering
+    \begin{tabular}{r|p{8cm}}
+        Group & Phonemes \\
+        \hline
+        Vowels & \texttt{iy, ih, eh, ey, ae, aa, aw, ay, ah, ao, oy, ow, uh, uw, ux, er, ax, ix, axr, ax-h} \\
+        Stops & \texttt{b, d, g, p, t, k, dx, q} \\
+        Closures & \texttt{bcl, dcl, gcl, pcl, tck, kcl, tcl} \\
+        Affricates & \texttt{jh, ch} \\
+        Fricatives & \texttt{s, sh, z, zh, f, th, v, dh} \\
+        Nasals & \texttt{m, n, ng, em, en, eng, nx} \\
+        Semivowels and Glides & \texttt{l, r, w, y, hh, hv, el} \\
+        Others & \texttt{pau, epi, h\#, 1, 2} \\ 
+    \end{tabular}
+    \caption{TIMIT phoneme groupings}
+    \label{tab:timit-phonemes}
+\end{table}
+\end{frame}
+
+\begin{frame}{Phoneme lengths in TIMIT}
+\protect\hypertarget{phoneme-lengths-in-timit}{}
+\begin{figure}[t!]
+    \centering
+    \hfill
+    \includegraphics[width=\columnwidth]{gfx/TIMIT_validation_set_phoneme_duration_boxplot_speaker_id_None.pdf}
+    \caption{Boxplot of the duration of the pronunciation of phonemes in the TIMIT validation set.}
+    \label{fig:timit-phoneme-duration}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Mu Law Distribution Illustrated}
+\protect\hypertarget{mu-law-distribution-illustrated}{}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\columnwidth]{mu_law.png}
+    \caption{
+    Distribution of raw PCM values from the TIMIT test set. Far left: PCM (16-bit integers). Others: corresponding distribution after $\mu$-law encoding the waveform values with $\mu \in {8,10,16}$.
+    %At 16 bits, all areas of the spectrum are covered while not overpopulated at the extreme bins.
+    }
+    %\label{fig:mu-law-enc}
+\end{figure}
+\end{frame}
+
+\begin{frame}[fragile]{Output distribution of WaveNet from Librispeech
+clean-100h - 1}
+\protect\hypertarget{output-distribution-of-wavenet-from-librispeech-clean-100h---1}{}
+\begin{figure}
+\resizebox{\columnwidth}{!}{
+\centering
+\includegraphics[width=0.45\textwidth]{gfx/S2_N5_L10_C64_output_distribution.png}
+    \includegraphics[width=0.45\textwidth]{gfx/S4_N5_L10_C64_output_distribution.png}
+}
+\end{figure}
+
+Sampled Output Distributions for WaveNet models trained on the
+Librispeech \texttt{clean-100h} subset. Distributions are in 16 bit
+\(\mu\)-law space and binned into 256 bins from -1 to 1.
+\end{frame}
+
+\begin{frame}[fragile]{Output distribution of WaveNet from Librispeech
+clean-100h - 2}
+\protect\hypertarget{output-distribution-of-wavenet-from-librispeech-clean-100h---2}{}
+\begin{figure}
+\resizebox{\columnwidth}{!}{
+\centering
+    \includegraphics[width=0.45\textwidth]{gfx/S8_N5_L10_C64_output_distribution.png}
+    \includegraphics[width=0.45\textwidth]{gfx/S16_N5_L10_C64_output_distribution.png}
+}
+\end{figure}
+
+Sampled Output Distributions for WaveNet models trained on the
+Librispeech \texttt{clean-100h} subset. Distributions are in 16 bit
+\(\mu\)-law space and binned into 256 bins from -1 to 1.
+\end{frame}
+
+\begin{frame}{Output distribution of WaveNet from Librispeech clean-100h
+- constrained}
+\protect\hypertarget{output-distribution-of-wavenet-from-librispeech-clean-100h---constrained}{}
+\begin{figure}
+\resizebox{\columnwidth}{!}{
+\centering
+    \includegraphics[width=0.45\textwidth]{gfx/S2_N5_L10_C64_output_distribution_cut.png}
+
+    \includegraphics[width=0.45\textwidth]{gfx/S16_N5_L10_C64_output_distribution_cut.png}
+}
+\end{figure}
+\end{frame}
+
+\begin{frame}{LSTM}
+\protect\hypertarget{lstm}{}
+\begin{figure}
+\resizebox{!}{0.9\textheight}{
+\centering
+\begin{tikzpicture}[
+    % GLOBAL CFG
+    %font=\sf \scriptsize,
+    %>=LaTeX,
+    % Styles
+    cell/.style={% For the main box
+        rectangle, 
+        rounded corners=5mm, 
+        draw,
+        very thick,
+        },
+    operator/.style={%For operators like +  and  x
+        circle,
+        draw,
+        inner sep=-0.5pt,
+        minimum height =.2cm,
+        },
+    function/.style={%For functions
+        ellipse,
+        draw,
+        inner sep=1pt
+        },
+    gct/.style={% For external inputs and outputs
+        circle,
+        draw,
+        line width = .75pt,
+        minimum width=1cm,
+        inner sep=1pt,
+        },
+    gt/.style={% For internal inputs
+        rectangle,
+        draw,
+        minimum width=5mm,
+        minimum height=4mm,
+        inner sep=1pt
+        },
+    mylabel/.style={% something new that I have learned
+        font=\scriptsize\sffamily
+        },
+    ArrowC1/.style={% Arrows with rounded corners
+        rounded corners=.25cm,thick,
+        },
+    ArrowC2/.style={% Arrows with big rounded corners
+        rounded corners=.5cm,
+        thick,
+        },
+    ]
+
+%Start drawing the thing...    
+    % Draw the cell: 
+    \node [cell, minimum height =4cm, minimum width=6cm] at (0,0){} ;
+
+    % Draw inputs named ibox#
+    \node [gt] (ibox1) at (-2,-0.75) {$\sigma$};
+    \node [gt] (ibox2) at (-1.5,-0.75) {$\sigma$};
+    \node [gt, minimum width=1cm] (ibox3) at (-0.5,-0.75) {Tanh};
+    \node [gt] (ibox4) at (0.5,-0.75) {$\sigma$};
+
+   % Draw opérators   named mux# , add# and func#
+    \node [operator] (mux1) at (-2,1.5) {$\times$};
+    \node [operator] (add1) at (-0.5,1.5) {+};
+    \node [operator] (mux2) at (-0.5,0) {$\times$};
+    \node [operator] (mux3) at (1.5,0) {$\times$};
+    \node [function] (func1) at (1.5,0.75) {Tanh};
+
+    % Draw External inputs? named as basis c,h,x
+    \node[gct, label={Cell}] (c) at (-4,1.5) {\empt{c}{t-1}};
+    \node[gct, label={Hidden}] (h) at (-4,-1.5) {\empt{h}{t-1}};
+    \node[gct, label={left:Input}] (x) at (-2.5,-3) {\empt{x}{t}};
+
+    % Draw External outputs? named as basis c2,h2,x2
+    \node[gct, label={Label1}] (c2) at (4,1.5) {\empt{c}{t}};
+    \node[gct, label={Label2}] (h2) at (4,-1.5) {\empt{h}{t}};
+    \node[gct, label={left:Label3}] (x2) at (2.5,3) {\empt{h}{t}};
+
+% Start connecting all.
+    %Intersections and displacements are used. 
+    % Drawing arrows    
+    \draw [ArrowC1] (c) -- (mux1) -- (add1) -- (c2);
+
+    % Inputs
+    \draw [ArrowC2] (h) -| (ibox4);
+    \draw [ArrowC1] (h -| ibox1)++(-0.5,0) -| (ibox1); 
+    \draw [ArrowC1] (h -| ibox2)++(-0.5,0) -| (ibox2);
+    \draw [ArrowC1] (h -| ibox3)++(-0.5,0) -| (ibox3);
+    \draw [ArrowC1] (x) -- (x |- h)-| (ibox3);
+
+    % Internal
+    \draw [->, ArrowC2] (ibox1) -- (mux1);
+    \draw [->, ArrowC2] (ibox2) |- (mux2);
+    \draw [->, ArrowC2] (ibox3) -- (mux2);
+    \draw [->, ArrowC2] (ibox4) |- (mux3);
+    \draw [->, ArrowC2] (mux2) -- (add1);
+    \draw [->, ArrowC1] (add1 -| func1)++(-0.5,0) -| (func1);
+    \draw [->, ArrowC2] (func1) -- (mux3);
+
+    %Outputs
+    \draw [-, ArrowC2] (mux3) |- (h2);
+    \draw (c2 -| x2) ++(0,-0.1) coordinate (i1);
+    \draw [-, ArrowC2] (h2 -| x2)++(-0.5,0) -| (i1);
+    \draw [-, ArrowC2] (i1)++(0,0.2) -- (x2);
+
+\end{tikzpicture}
+}
+
+\end{figure}
+\end{frame}
 
 \end{document}

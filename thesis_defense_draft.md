@@ -37,7 +37,7 @@ aspectratio: 169
 
 Learns a mapping from data $\mathbf{x}$ to labels $\mathbf{y}$:  
 $$
-p(\mathbf{x}|\mathbf{y}) = \sum^N_{i=1} p(y_i| x_i)
+p(\mathbf{y}|\mathbf{x}) = \sum^N_{i=1} p(y_i| x_i)
 $$
 
 ::::
@@ -71,11 +71,11 @@ $$
 
   
 
-## Sequence modeling 
+## Unsupervised sequence modeling 
 
-Sequence modeling optimize the model's likelihood $p(\cdot)$ over the data $\mathbf{x}$, by conditioning the probability of $x_t$ on previous timesteps:
+Unsupervised sequence modeling optimize the likelihood $p(\cdot)$ of the data $\mathbf{x}$, calculated by conditioning the likelihood of $x_t$ on previous timesteps:
 $$
-p(\mathbf{x}) = \prod^N_{t=1}  p(x_t | x_{<t}) , \hspace{1cm}  \mathbf{x}\in \mathbb{R}^N
+p(\mathbf{x}) = \prod^N_{t=1}  p(x_t | x_{<t}) , \hspace{1cm}  \mathbf{x}\in \mathbb{R}^{N}
 $$
 
 ## Recurrent vs. Convolutional Autoregressive models
@@ -151,7 +151,7 @@ $$
 
 
 
-- Common vocoder in Speech To Text production systems
+- Common vocoder in  Text to Speech production systems
 - Makes use of dilated convolution to inflate receptive field 
 - No "hidden state" for representing earlier timesteps
 - Constrained to look back within receptive field
@@ -160,10 +160,10 @@ $$
 
 ## Main Problem with WaveNet ... 
 
-+ excelling at capturing local signal structure 
-+ missing long-range correlations
-+ low receptive field (300ms)
-+ audio generation sounds like babbling 
++ Local signal structure  
++ Missing long-range correlations
++ Low receptive field (300ms)
++ Generated audio sounds like babbling if not conditioned on phoneme or text representations 
 
 
 
@@ -184,10 +184,18 @@ $$
 
 1. Expanding Receptive Field by Stacking
 2. Latent Space of Stacked WaveNets
-3. WaveNet as a Language Model
-4. WaveNet as an ASR preprocessor
+3. WaveNet as an ASR preprocessor
+4. WaveNet as a Language Model
 
 ## Expanding Receptive Field by Stacking - Setup
+
+### Hypothesis tested
+
+> 1. WaveNet’s receptive field is the main limiting factor for modeling long-range dependencies. 
+
+### Setup
+
+Transform x as:
 
 ```{=latex}
 \begin{figure}
@@ -201,17 +209,33 @@ $$
 
 
 
+## Visualization of stacking on Sin curve
+
+```{=latex}
+\begin{figure}
+\centering
+\resizebox{1.0\columnwidth}{!}{
+
+\input{gfx/sin_receptive_field_tikz.tex}
+}
+\end{figure}
+```
+
+
+
+
+
 ## Expanding Receptive Field by Stacking - Results
 
 ```{=latex}
 \begin{figure}
 \centering
-\resizebox{0.7\columnwidth}{!}{
+\resizebox{!}{0.9\textheight}{
 \begin{tikzpicture}
 \begin{axis}[
     title={WaveNet results on stacked audio samples},
     xlabel={Stacking ratio $S$},
-    ylabel={Likelihood [BPD]},
+    ylabel={TIMIT test set Likelihood [BPD]},
     %xmin=0, xmax=16,
     %ymin=10, ymax=13,
     ymajorgrids=true,
@@ -253,13 +277,29 @@ $$
 
 ## Expanding Receptive Field by Stacking - Conclusions
 
-1. Increasing the stacking does not improve likelihoods significantly.
-2. Increasing the number of residual channels increases evaluation likelihoods.
-3. 
+1. Stacking does not improve likelihoods significantly.
+2. Increasing residual channels increases evaluation likelihoods.
+
+
+
+Does this mean that the WaveNet does not extract any semantic information at all?
+
+
+
+Is this a failure to measure the output correctly?
 
 ## Latent space of stacked WaveNet - Setup 
 
+### Hypothesis tested
 
+> 2. WaveNet’s stacked convolutional layers learn good representations of speech.
+
+### Setup
+
+1. Extract the hidden states of WaveNet for the TIMIT test set.
+2. Reduce dimensionality from $C$ to 2 using Principal Component Analysis.
+3. Plot density plot of all samples
+4. Overlay 2500 samples with phoneme labels to observe clusters
 
 ## Latent space of stacked WaveNet - Results
 
@@ -273,40 +313,17 @@ $$
 \end{figure}
 ```
 
-## WaveNet as a Language Model - Setup 
+## WaveNet as an ASR preprocessor - setup
 
+### Hypothesis tested
 
+> 2. WaveNet’s stacked convolutional layers learn good representations of speech.
 
-## WaveNet as a Language Model - Results 
+### Idea
 
-```{=latex}
+Are WaveNet's unsupervised representations more useful for Speech Recognition models than raw audio?
 
-\begin{table}[htb]
-    \centering
-    \begin{tabular}{l|c||c}
-        Model & Dataset & BPD (test) \\
-        \hline
-        Mogrifier LSTM \cite{melis_mogrifier_2020} & PTB & 1.083 \\
-        Temporal Convolutional Network \cite{bai_empirical_2018} & PTB & 1.31 \\
-        \hline
-        WaveNet N=5 L=4 R=24 [RF 126] & PTB & 1.835 \\
-        WaveNet N=5 L=4 R=32 [RF 126] & PTB & \textbf{1.666} \\
-        WaveNet N=5 L=4 R=48 [RF 126] & PTB & 1.678 \\
-        % WaveNet L=4 N=5 R=64 [RF 126] & Billion Word & 1.483 \\%1.677 \\
-    \end{tabular}
-\end{table}
-
-```
-
-
-
-
-
-## WaveNet as a Language Model - Conclusions 
-
-
-
-## WaveNet as an ASR preprocessor - control setup
+## WaveNet as an ASR preprocessor - setup (0 layers)
 
 
 
@@ -321,20 +338,18 @@ $$
 
 
 
-## WaveNet as an ASR preprocessor - experiment setup
+## WaveNet as an ASR preprocessor - setup (3 layers)
 
 
 
 ```{=latex}
 \begin{figure}
 \centering
-\resizebox{0.9\columnwidth}{!}{
+\resizebox{!}{0.9\textheight}{
 \input{gfx/wavenet_asr_tikz}
 }
 \end{figure}
 ```
-
-
 
 
 
@@ -401,15 +416,63 @@ $$
 
 
 
+## WaveNet as a Language Model - Setup 
+
+### Hypothesis tested
+
+> 3. WaveNet’s hierarchical structure makes it suitable to learn priors over representations of speech such as text.
+
+### Setup
+
+- WaveNet implemented as a character-level language model
+- Categorical output distribution over alphabet
+- Receptive field of 126 characters to match typical sentence length.
+
+
+
+
+
+## WaveNet as a Language Model - Results 
+
+```{=latex}
+\begin{table}[htb]
+    \centering
+    \begin{tabular}{l|c||c}
+        Model & Dataset & BPD (test) \\
+        \hline
+        Mogrifier LSTM \cite{melis_mogrifier_2020} & PTB & 1.083 \\
+        Temporal Convolutional Network \cite{bai_empirical_2018} & PTB & 1.31 \\
+        \hline
+        WaveNet N=5 L=4 R=24 [RF 126] & PTB & 1.835 \\
+        WaveNet N=5 L=4 R=32 [RF 126] & PTB & \textbf{1.666} \\
+        WaveNet N=5 L=4 R=48 [RF 126] & PTB & 1.678 \\
+        % WaveNet L=4 N=5 R=64 [RF 126] & Billion Word & 1.483 \\%1.677 \\
+    \end{tabular}
+\end{table}
+
+```
+
+
+
+
+
+## WaveNet as a Language Model - Conclusions 
+
+
+
+- WaveNet remains below the bar compared to state-of-the-art models for Language Modelling, contradicting the hypothesis
+- This may contribute to WaveNet's limited performance in speech synthesis
+
 # Conclusions
 
 
 
-
-
-
-
-
+| Hypothesis                                                   | Support? |
+| ------------------------------------------------------------ | -------- |
+| WaveNet’s receptive field is the main limiting factor for modeling long-range dependencies. | No       |
+| WaveNet’s stacked convolutional layers learn good representations of speech. | Yes      |
+| WaveNet’s hierarchical structure makes it suitable to learn priors over representations of speech such as text. | No       |
+| A large WaveNet architecture trained on speech can generate coherent words and sentence fragments | No       |
 
 
 
@@ -479,18 +542,37 @@ Run gradient evaluation over a trained WaveNet model and visualize the outputs.
 | $d_i$                           | Dilation of $i$th layer in a WaveNet architecture            |
 | $C$                             | Number of residual channels                                  |
 
-## Overview of Codebase 
+## Overview of Codebase and Experiments
 
 ::: columns
 
-:::: column
+:::: {.column width=40%}
 
+### Codebase
+
+- https://github.com/JakobHavtorn/vseq/tree/wavenet-exps
 - Collaborative codebase with Jakob Havtorn and Lasse Borgholt (PhDs at Corti)
-- Includes custom implementations of many modules in the 
+
+- Includes custom implementations of likelihoods, data processing steps 
 
 ::::
 
-:::: column
+:::: {.column width=60%}
+
+### Work timeline
+
+| Experiment                             | Time     |
+| -------------------------------------- | -------- |
+| Single Timestep WaveNet                | May      |
+| WaveNet gradient evaluation check      | May-June |
+| Audio LSTM control                     | May-June |
+| Stacked WaveNet (softmax distribution) | June-Aug |
+| Stacked WaveNet (DMoL)                 | Aug-Nov  |
+| Latent space of stacked WaveNet        | Oct-Nov  |
+| WaveNet as an ASR preprocessor         | Nov-Dec  |
+| WaveNet as a Language Model (Text)     | Nov-Dec  |
+| WaveNet as a Language Model (Nanobody) | Dec      |
+|                                        |          |
 
 
 
@@ -500,11 +582,33 @@ Run gradient evaluation over a trained WaveNet model and visualize the outputs.
 
 
 
-TODO: Implementations to mention:
+## Overview of extra experiments
 
-- Residual Stack
-- Categorical WaveNet
-- DMoL WaveNet
+| Model                                    | Dataset(s)                                             | Notes                                          |
+| ---------------------------------------- | ------------------------------------------------------ | ---------------------------------------------- |
+| Single-Timestep WaveNet (softmax output) | TIMIT                                                  | Slow convergence compared to later DMoL        |
+| Stacked WaveNet (softmax output)         | TIMIT, Librispeech                                     | Collapses to predict silence for all timesteps |
+| Single Timestep WaveNet                  | Generated Sinusoids with periodically modulated pitch. | Fails to follow modulation in pitch            |
+
+## Different tested embeddings for stacked WaveNet input
+
+| Embedding type                                               | Dim   | Number       | Note                                                         |
+| ------------------------------------------------------------ | ----- | ------------ | ------------------------------------------------------------ |
+| Lookup table embedding with input dimensionality $S\times C$ | $128$ | $1024$       | Outputs collapsed to silence (suspect too sparse embeddings) |
+| $S$ embeddings convolved together                            | 128   | $S\cdot 256$ | White noise output.                                          |
+| 2 Layer perceptron with input size $S$ and output size $R$   | $R$   | Continuous   | Final used embedding                                         |
+
+
+
+## Stacking Transformation
+
+$$
+x^*_t = \begin{pmatrix}
+        x_{t} \\ \vdots \\ x_{t+S} \\
+    \end{pmatrix},
+    \hspace{1cm}
+    t\in\{1,S+1,\dots,T-S\}, \mathbf{x}^*\in\mathbb{R}^{N/S \times S}\mathbf{x}\in\mathbb{R}^{N}
+$$
 
 
 
@@ -513,7 +617,7 @@ TODO: Implementations to mention:
 ```{=latex}
 \begin{figure}
     \centering
-    \resizebox{!}{\textheight}{
+    \resizebox{!}{0.9\textheight}{
     \input{gfx/wavenet_residual_block_tikz}
     %\caption{
     %Overview of WaveNet's residual block. 
@@ -525,6 +629,17 @@ TODO: Implementations to mention:
 ```
 
 
+
+## Full WaveNet architecture
+
+```{=latex}
+\begin{figure}
+    \centering
+    \resizebox{!}{0.9\textheight}{
+    \input{gfx/wavenet_extended_arch}
+   }
+\end{figure}
+```
 
 
 
@@ -546,27 +661,6 @@ In a softmax distribution, the probability of the $i$th out of N discrete values
 $$
 \sigma(\mathbf{x})_i = \frac{\exp(x_i)}{\sum_{j=1}^N \exp(x_j)}
 $$
-
-
-## Different tested embeddings for stacked WaveNet input
-
-| Embedding type                                               | Dim   | Number       | Note                                                         |
-| ------------------------------------------------------------ | ----- | ------------ | ------------------------------------------------------------ |
-| Lookup table embedding with input dimensionality $S\times C$ | $128$ | $1024$       | Outputs collapsed to silence (suspect too sparse embeddings) |
-| $S$ embeddings convolved together                            | 128   | $S\cdot 256$ | White noise output.                                          |
-| 2 Layer perceptron with input size $S$ and output size $R$   | $R$   | Continuous   | Final used embedding                                         |
-
-
-
-## Overview of extra experiments
-
-| Model                                    | Dataset(s)                                             | Notes                                          |
-| ---------------------------------------- | ------------------------------------------------------ | ---------------------------------------------- |
-| Single-Timestep WaveNet (softmax output) | TIMIT                                                  | Slow convergence compared to later DMoL        |
-| Stacked WaveNet (softmax output)         | TIMIT, Librispeech                                     | Collapses to predict silence for all timesteps |
-| Single Timestep WaveNet                  | Generated Sinusoids with periodically modulated pitch. | Fails to follow modulation in pitch            |
-
-
 
 ## Phonemes in TIMIT
 
@@ -613,7 +707,7 @@ $$
 
 
 
-## Mu Law Distribution 
+## Mu Law Distribution Illustrated
 
 ```{=latex}
 
@@ -630,14 +724,141 @@ $$
 
 
 
-## Visualization of stacking on Sin curve
+## Output distribution of WaveNet from Librispeech clean-100h - 1
 
 ```{=latex}
 \begin{figure}
+\resizebox{\columnwidth}{!}{
 \centering
-\resizebox{1.0\columnwidth}{!}{
+\includegraphics[width=0.45\textwidth]{gfx/S2_N5_L10_C64_output_distribution.png}
+    \includegraphics[width=0.45\textwidth]{gfx/S4_N5_L10_C64_output_distribution.png}
+}
+\end{figure}
+
+```
+
+Sampled Output Distributions for WaveNet models trained on the Librispeech `clean-100h` subset.
+    Distributions are in 16 bit $\mu$-law space and binned into 256 bins from -1 to 1.
+
+
+
+## Output distribution of WaveNet from Librispeech clean-100h - 2
+
+```{=latex}
+\begin{figure}
+\resizebox{\columnwidth}{!}{
+\centering
+    \includegraphics[width=0.45\textwidth]{gfx/S8_N5_L10_C64_output_distribution.png}
+    \includegraphics[width=0.45\textwidth]{gfx/S16_N5_L10_C64_output_distribution.png}
+}
+\end{figure}
+
+```
+
+Sampled Output Distributions for WaveNet models trained on the Librispeech `clean-100h` subset.
+    Distributions are in 16 bit $\mu$-law space and binned into 256 bins from -1 to 1.
+
+
+
+## Output distribution of WaveNet from Librispeech clean-100h - constrained
+
+```{=latex}
+\begin{figure}
+\resizebox{\columnwidth}{!}{
+\centering
+    \includegraphics[width=0.45\textwidth]{gfx/S2_N5_L10_C64_output_distribution_cut.png}
+
+    \includegraphics[width=0.45\textwidth]{gfx/S16_N5_L10_C64_output_distribution_cut.png}
+}
+\end{figure}
+```
+
+## LSTM
+
+ ```{=latex}
+ \begin{figure}
+ \resizebox{!}{0.9\textheight}{
+ \centering
+ \input{gfx/lstm_tikz}
+ }
+ \end{figure}
+ ```
+
+
+
+## Sigmoid and Tanh Activation functions
+
+```{=latex}
+\begin{figure}
+\resizebox{\columnwidth}{!}{
+\centering
+\begin{tikzpicture}[declare function={dtanh(\x)=1/((exp(\x)+exp(-\x))^2;
+}]
+    \begin{axis}[
+    title = {Tanh},
+        axis lines = left,
+        xlabel = \(x\),
+        domain=-4:4,
+        legend pos=north west,
+    ]
+    
+    \addplot [mark=none,draw=blue,] {tanh(\x)};
+    \addplot [mark=none,draw=red,dashed] {dtanh(\x)};
+
+    \legend{$tanh(x)$,$sech^2(x)$}
+
+\end{axis}
+\end{tikzpicture}%
+\hspace{0.15cm}
+\begin{tikzpicture}[declare function={sigma(\x)=1/(1+exp(-\x));
+sigmap(\x)=sigma(\x)*(1-sigma(\x));}]
+    \begin{axis}[
+    title = {Sigmoid $x \mapsto \frac{1}{1+\exp (-x)}$},
+        axis lines = left,
+        xlabel = \(x\),
+        domain=-4:4,
+        legend pos=north west,
+    ]
+    \addplot[blue,mark=none]   (x,{sigma(x)});
+    \addplot[red,dashed,mark=none]   (x,{sigmap(x)});
+    \legend{$\sigma(x)$,$\sigma'(x)$}
+
+    
+\end{axis}
+\end{tikzpicture}%
+
+}
+\end{figure}
+```
+
+
+
+## ReLU activation function
+
+```{=latex}
+ \begin{figure}
+\resizebox{!}{0.9\textheight}{
+\centering
 \begin{tikzpicture}
-\input{gfx/sin_receptive_field_tikz.tex}
+\begin{axis}[
+    title = {ReLu},
+        axis lines = left,
+        xlabel = \(x\),
+        domain=-4:4,
+        legend pos=north west,
+        ymin=-2,
+    		ymax=5,
+    ]
+        \addplot+[mark=none,blue,domain=-4:0] {0};
+        \addplot+[mark=none,blue,domain=0:4] {x};
+
+        \addplot+[mark=none,red, dashed , domain=-4:0] {0};
+        \addplot+[mark=none,red, dashed,domain=0:4] {1};
+
+
+\end{axis}
+\end{tikzpicture}%
+
 }
 \end{figure}
 ```

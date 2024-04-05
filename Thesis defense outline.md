@@ -48,3 +48,12 @@ For each experiment:
 - Notation slide 
 - Funktion slide
 - 
+
+
+
+## ADD
+
+- GRU slide
+- LSTM slide
+- CTC slide
+- Ex. architecture slide

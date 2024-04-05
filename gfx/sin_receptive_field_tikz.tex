@@ -1,4 +1,5 @@
-\begin{axis}[
+\begin{tikzpicture}
+    \begin{axis}[
         axis lines = left,
         xlabel = \(x\),
         domain=-10:10,
@@ -34,7 +35,7 @@
     coordinates {
             (4.0,-0.756)
         };
-    \addlegendentry{Output}
+    \addlegendentry{Target}
 \end{axis}
 \end{tikzpicture}%
 \hspace{0.15cm}
@@ -68,6 +69,6 @@
             only marks,
         ]
         {sin(deg(x))};
-        \addlegendentry{Output}
+        \addlegendentry{Target}
     \end{axis}
 \end{tikzpicture}%
